@@ -1,6 +1,5 @@
 package com.wa2c.java.externaltagger;
 
-import com.google.gson.Gson;
 import com.wa2c.java.externaltagger.common.Logger;
 import org.jaudiotagger.tag.TagOptionSingleton;
 import org.jaudiotagger.tag.id3.valuepair.TextEncoding;
@@ -31,7 +30,7 @@ public class Program {
         TagOptionSingleton.getInstance().setId3v24UnicodeTextEncoding(TextEncoding.UTF_16);
 
         // ジャンルをテキストとして書込む
-        TagOptionSingleton.getInstance().setWriteMp3GenresAsText(true);
+        TagOptionSingleton.getInstance().setWriteMp3GenresAsText(false);
         TagOptionSingleton.getInstance().setWriteMp4GenresAsText(true);
 
         EventQueue.invokeLater(new Runnable() {

@@ -2,6 +2,8 @@ package com.wa2c.java.externaltagger;
 
 import com.wa2c.java.externaltagger.common.*;
 import com.wa2c.java.externaltagger.source.*;
+import com.wa2c.java.externaltagger.view.SourceTable;
+import com.wa2c.java.externaltagger.view.SourceTableModel;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -42,8 +44,6 @@ public class MainForm extends JFrame {
     private JButton mediaClearButton;
     private JButton fieldWriteButton;
     private JButton fieldResetButton;
-    private JList sourceList;
-    private JCheckBox sourceEnabledCheckBox;
     private JCheckBox searchCompareTitleCheckBox;
     private JComboBox searchFieldTitleComboBox;
     private JComboBox searchFieldArtistComboBox;
@@ -59,9 +59,8 @@ public class MainForm extends JFrame {
     private JTextField searchFieldArtistTextField;
     private JTextField searchFieldAlbumTextField;
     private JButton launchSettingsButton;
-    private JButton button1;
     private JButton searchIndividualButton;
-    private JList list1;
+    private SourceTable sourceTable;
 
 
     private final List<AbstractExternalSource> externalSource = new ArrayList<>();
@@ -128,93 +127,51 @@ public class MainForm extends JFrame {
         });
         popupMenu.add(menuItem);
         JMenuItem resetMenuItem = new JMenuItem("Reset");
-        resetMenuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeSelectedMedia();
-            }
-        });
+        resetMenuItem.addActionListener(e -> removeSelectedMedia());
         popupMenu.add(resetMenuItem);
         JMenuItem deleteMenuItem = new JMenuItem("Delete");
-        deleteMenuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeSelectedMedia();
-            }
-        });
+        deleteMenuItem.addActionListener(e -> removeSelectedMedia());
         popupMenu.add(deleteMenuItem);
 
         // TODO test
         JMenuItem testMenuItem = new JMenuItem("test");
-        testMenuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ;
-            }
+        testMenuItem.addActionListener(e -> {
+            ;
         });
         popupMenu.add(testMenuItem);
 
         // button
 
-        searchIndividualButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                getIndividualInfo();
-            }
-        });
+        searchIndividualButton.addActionListener(e -> getIndividualInfo());
 
-        mediaAddButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser fileDialog = new JFileChooser();
-                fileDialog.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-                fileDialog.setMultiSelectionEnabled(true);
-                if (fileDialog.showOpenDialog(MainForm.this) == JFileChooser.APPROVE_OPTION) {
-                    File file = fileDialog.getSelectedFile();
-                    readFile(fileDialog.getSelectedFiles());
-                    updateMediaTable();
-                }
-            }
-        });
-        mediaClearButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                mediaList.clear();
+        mediaAddButton.addActionListener(e -> {
+            JFileChooser fileDialog = new JFileChooser();
+            fileDialog.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+            fileDialog.setMultiSelectionEnabled(true);
+            if (fileDialog.showOpenDialog(MainForm.this) == JFileChooser.APPROVE_OPTION) {
+                File file = fileDialog.getSelectedFile();
+                readFile(fileDialog.getSelectedFiles());
                 updateMediaTable();
             }
         });
-        fieldGetButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        mediaClearButton.addActionListener(e -> {
+            mediaList.clear();
+            updateMediaTable();
+        });
+        fieldGetButton.addActionListener(e -> {
 //                int[] rows = mediaTable.getSelectedRows();
 //                DownloadConfirmationDialog dialog = new DownloadConfirmationDialog();
 //                dialog.pack();
 //                dialog.setVisible(true);
 //                if (dialog.getResult() != JOptionPane.OK_OPTION)
 //                    return;
-                // 情報取得
-                //mediaTable.changeSelection();
-                getSelectedMediaInfo();
-            }
+            // 情報取得
+            //mediaTable.changeSelection();
+            getSelectedMediaInfo();
         });
-        fieldWriteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                writeSelectedMediaInfo();
-            }
-        });
-        fieldResetButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                resetSelectedMediaInfo();
-            }
-        });
-        fieldDeleteButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                removeSelectedMedia();
-            }
-        });
+        fieldWriteButton.addActionListener(e -> writeSelectedMediaInfo());
+        fieldResetButton.addActionListener(e -> resetSelectedMediaInfo());
+        fieldDeleteButton.addActionListener(e -> removeSelectedMedia());
         launchSettingsButton.addActionListener(e -> {
             SettingsDialog dialog = new SettingsDialog();
             dialog.pack();
@@ -223,12 +180,9 @@ public class MainForm extends JFrame {
 
         // listener
 
-        mediaTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                updateSearchField();
-            }
-        });
+        mediaTable.getSelectionModel().addListSelectionListener(e -> updateSearchField());
+        sourceTable.getColumnModel().getColumn(0).setMaxWidth(sourceTable.getFont().getSize() + 8);
+        sourceTable.setRowHeight(sourceTable.getFont().getSize() + 8);
 
         mediaTable.addKeyListener(new KeyAdapter() {
             @Override
@@ -268,7 +222,10 @@ public class MainForm extends JFrame {
             }
         });
 
-        sourceList.addListSelectionListener(e -> updateSourcePaneTable());
+
+//        // Source Field
+//        sourceList.addListSelectionListener(e -> updateSourcePaneTable());
+
 
         // 検索フィールド
         searchFieldTitleComboBox.addItemListener(e -> {
@@ -288,17 +245,6 @@ public class MainForm extends JFrame {
         });
     }
 
-    private ChangeListener sourceEnabledActionListener =  new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-            if (!sourceList.isSelectionEmpty()) {
-                JCheckBox c = (JCheckBox)e.getSource();
-                externalSource.get(sourceList.getSelectedIndex()).setEnabled(c.isSelected());
-                Program.Pref.sourceEnabledMap.put( externalSource.get(sourceList.getSelectedIndex()).getClass().getName(), c.isSelected() );
-            }
-        }
-    };
-
 
 
     /**
@@ -306,7 +252,7 @@ public class MainForm extends JFrame {
      */
     private void initializeData() {
         // Media Table
-        Object[] header = Arrays.asList(MediaField.values()).stream().map(x -> x != null ? x.getLabel() : null).toArray();
+        Object[] header = Arrays.stream(MediaField.values()).map(x -> x != null ? x.getLabel() : null).toArray();
         DefaultTableModel tableModel = new DefaultTableModel(header, 0);
         mediaTable.setModel(tableModel);
 
@@ -331,6 +277,8 @@ public class MainForm extends JFrame {
         searchFieldAlbumComboBox.setSelectedIndex(0);
 
         // Source
+
+
         AbstractExternalSource source;
         source = new SourceAmazonJp();
         externalSource.add(source);
@@ -352,7 +300,8 @@ public class MainForm extends JFrame {
             }
         }
 
-        updateSourceList();
+//        updateSourceList();
+        updateSourceTable();
     }
 
     /**
@@ -388,82 +337,61 @@ public class MainForm extends JFrame {
 
 
 
-    /**
-     * Update sources list.
-     */
-    private void updateSourceList() {
-        sourceList.removeAll();
-        sourceList.setListData(externalSource.toArray(new AbstractExternalSource[externalSource.size()]));
-        updateSourcePaneTable();
+    private void updateSourceTable() {
+        SourceTableModel sourceTableModel = new SourceTableModel(externalSource);
+        sourceTableModel.addTableModelListener(new TableModelListener() {
+            @Override
+            public void tableChanged(TableModelEvent e) {
+                int row = e.getFirstRow();
+                int col = e.getColumn();
+                if (col != 0)
+                    return;
+
+                sourceTableModel.removeTableModelListener(this);
+
+                for (int i = 0; i < sourceTableModel.getRowCount(); i++) {
+                    sourceTableModel.setValueAt(false, i, 0);
+                    externalSource.get(i).setEnabled(false);
+                    Program.Pref.sourceEnabledMap.put(externalSource.get(i).getClass().getName(), false);
+                }
+                sourceTableModel.setValueAt(true, row, 0);
+                externalSource.get(row).setEnabled(true);
+                Program.Pref.sourceEnabledMap.put(externalSource.get(row).getClass().getName(), true);
+
+                sourceTableModel.addTableModelListener(this);
+            }
+        });
+        sourceTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent event) {
+                updateSourceParameter();
+                sourceParamPanel.updateUI();
+            }
+        });
+
+        sourceTable.setModel(sourceTableModel);
+        updateSourceParameter();
     }
 
 
-    /**
-     * Update source properties list.
-     */
-    private void updateSourcePaneTable() {
-        // 状態変更
-        sourceEnabledCheckBox.removeChangeListener(sourceEnabledActionListener);
-        if (sourceList.isSelectionEmpty()) {
-            sourceEnabledCheckBox.setSelected(false);
-            sourceEnabledCheckBox.setEnabled(false);
-        } else {
-            sourceEnabledCheckBox.setEnabled(true);
-            sourceEnabledCheckBox.setSelected(externalSource.get(sourceList.getSelectedIndex()).getEnabled());
-        }
-        sourceEnabledCheckBox.addChangeListener(sourceEnabledActionListener);
-
+    private void updateSourceParameter() {
         sourceParamPanel.removeAll();
-        int selectedIndex = sourceList.getSelectedIndex();
-        if (selectedIndex < 0) {
-            return;
-        }
 
+        int index = sourceTable.getSelectedRow();
+        if (index < 0 || index >= externalSource.size())
+            return;
 
         GridBagLayout gridLayout = (GridBagLayout)sourceParamPanel.getLayout();
         GridBagConstraints gbc = new GridBagConstraints();
         int i = 0;
-        for (MediaField f : externalSource.get(selectedIndex).getResultField()) {
+        AbstractExternalSource source = externalSource.get(sourceTable.getSelectedRow());
+        for (MediaField f : source.getResultField()) {
             Label lb = new Label(f.getLabel());
             gbc.gridy = i++;
             gbc.gridx = 0;
             gridLayout.setConstraints(lb, gbc);
             sourceParamPanel.add(lb);
         }
-
-
-//        externalSource.get(selectedIndex).getResultField().stream().forEach(c -> {
-//            JCheckBox cb = new JCheckBox(c.getLabel());
-//            Label lb = new Label(c.getLabel());
-//            gbc.gridx = 0;
-//            gbc.gridy = i++;
-//            gridLayout.setConstraints();
-//            sourceParamPanel.add(lb);
-//            sourceParamPanel.getLayout().
-//            //sourceParamPanel.add(lb, LayoutStyle);
-//        });
-        sourceParamPanel.updateUI();
-
-//        externalSource.get(selectedIndex).getTargetSource().stream().map(c -> c.getLabel()).collect(Collectors.joining("<br />")) + "</pre><html>"  });
-//
-//
-//        tableModel.addRow(new String[]{
-//                "フィールド",
-//                "<html><pre>" +  externalSource.get(selectedIndex).getTargetSource().stream().map(c -> c.getLabel()).collect(Collectors.joining("<br />")) + "</pre><html>"  });
-//        sourcePaneTable.setRowHeight(0, 200);
-//
-//        DefaultTableModel tableModel = (DefaultTableModel) sourcePaneTable.getModel();
-//        for (int i = 0; i < tableModel.getRowCount(); i++) {
-//            tableModel.removeRow(0);
-//        }
-//
-//        int selectedIndex = sourceList.getSelectedIndex();
-//        if (selectedIndex < 0) return;
-//
-//        tableModel.addRow(new String[]{
-//                "フィールド",
-//                "<html><pre>" +  externalSource.get(selectedIndex).getTargetSource().stream().map(c -> c.getLabel()).collect(Collectors.joining("<br />")) + "</pre><html>"  });
-//        sourcePaneTable.setRowHeight(0, 200);
     }
 
     /**
@@ -837,6 +765,9 @@ public class MainForm extends JFrame {
         }
     }
 
+    private void createUIComponents() {
+        // TODO: place custom component creation code here
+    }
 
 
     /**
