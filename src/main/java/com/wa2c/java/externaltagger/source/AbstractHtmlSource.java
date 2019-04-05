@@ -12,7 +12,7 @@ import com.gargoylesoftware.htmlunit.*;
 import com.gargoylesoftware.htmlunit.util.UrlUtils;
 import com.wa2c.java.externaltagger.common.FieldDataMap;
 import com.wa2c.java.externaltagger.common.Logger;
-import com.wa2c.java.externaltagger.common.MediaField;
+import com.wa2c.java.externaltagger.value.MediaField;
 import org.apache.commons.lang3.StringUtils;
 
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;

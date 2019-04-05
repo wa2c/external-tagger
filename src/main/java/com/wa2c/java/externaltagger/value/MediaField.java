@@ -1,4 +1,4 @@
-package com.wa2c.java.externaltagger.common;
+package com.wa2c.java.externaltagger.value;
 
 import java.util.ResourceBundle;
 

@@ -1,5 +1,7 @@
 package com.wa2c.java.externaltagger.common;
 
+import com.wa2c.java.externaltagger.value.MediaField;
+
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;

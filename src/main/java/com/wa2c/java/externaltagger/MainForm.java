@@ -1,7 +1,10 @@
 package com.wa2c.java.externaltagger;
 
 import com.wa2c.java.externaltagger.common.*;
+import com.wa2c.java.externaltagger.model.Settings;
 import com.wa2c.java.externaltagger.source.*;
+import com.wa2c.java.externaltagger.value.MediaField;
+import com.wa2c.java.externaltagger.value.SearchFieldUsing;
 import com.wa2c.java.externaltagger.view.SourceTable;
 import com.wa2c.java.externaltagger.view.SourceTableModel;
 import org.apache.commons.collections4.CollectionUtils;

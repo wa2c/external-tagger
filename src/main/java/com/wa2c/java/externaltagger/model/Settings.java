@@ -1,4 +1,4 @@
-package com.wa2c.java.externaltagger;
+package com.wa2c.java.externaltagger.model;
 
 import com.google.gson.Gson;
 import com.wa2c.java.externaltagger.common.Logger;

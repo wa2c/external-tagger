@@ -1,8 +1,8 @@
 package com.wa2c.java.externaltagger.source;
 
 import com.wa2c.java.externaltagger.common.FieldDataMap;
-import com.wa2c.java.externaltagger.common.MediaField;
-import com.wa2c.java.externaltagger.common.SearchFieldUsing;
+import com.wa2c.java.externaltagger.value.MediaField;
+import com.wa2c.java.externaltagger.value.SearchFieldUsing;
 
 import java.util.Map;
 import java.util.Set;

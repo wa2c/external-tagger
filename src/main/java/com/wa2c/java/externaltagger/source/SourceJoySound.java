@@ -1,6 +1,8 @@
 package com.wa2c.java.externaltagger.source;
 
 import com.wa2c.java.externaltagger.common.*;
+import com.wa2c.java.externaltagger.value.MediaField;
+import com.wa2c.java.externaltagger.value.SearchFieldUsing;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.UnsupportedEncodingException;

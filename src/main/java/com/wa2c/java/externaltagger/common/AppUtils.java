@@ -2,6 +2,7 @@ package com.wa2c.java.externaltagger.common;
 
 import java.text.Normalizer;
 
+import com.wa2c.java.externaltagger.value.SearchFieldUsing;
 import org.apache.commons.lang3.StringUtils;
 
 public final class AppUtils {
