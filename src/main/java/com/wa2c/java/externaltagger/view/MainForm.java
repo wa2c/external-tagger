@@ -1,12 +1,16 @@
-package com.wa2c.java.externaltagger;
+package com.wa2c.java.externaltagger.view;
 
+import com.wa2c.java.externaltagger.Program;
 import com.wa2c.java.externaltagger.common.*;
+import com.wa2c.java.externaltagger.controller.MediaFileController;
+import com.wa2c.java.externaltagger.model.FieldDataMap;
 import com.wa2c.java.externaltagger.model.Settings;
-import com.wa2c.java.externaltagger.source.*;
+import com.wa2c.java.externaltagger.controller.source.*;
 import com.wa2c.java.externaltagger.value.MediaField;
 import com.wa2c.java.externaltagger.value.SearchFieldUsing;
-import com.wa2c.java.externaltagger.view.SourceTable;
-import com.wa2c.java.externaltagger.view.SourceTableModel;
+import com.wa2c.java.externaltagger.view.component.SourceTable;
+import com.wa2c.java.externaltagger.view.component.SourceTableModel;
+import com.wa2c.java.externaltagger.view.dialog.SettingsDialog;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -68,6 +72,8 @@ public class MainForm extends JFrame {
 
     private final List<AbstractExternalSource> externalSource = new ArrayList<>();
     private final List<FieldDataMap> mediaList = new ArrayList<>();
+
+    private final MediaFileController mediaFileController = new MediaFileController();
 
 
     public MainForm() {
@@ -153,7 +159,7 @@ public class MainForm extends JFrame {
             fileDialog.setMultiSelectionEnabled(true);
             if (fileDialog.showOpenDialog(MainForm.this) == JFileChooser.APPROVE_OPTION) {
                 File file = fileDialog.getSelectedFile();
-                readFile(fileDialog.getSelectedFiles());
+                readMediaFile(fileDialog.getSelectedFiles());
                 updateMediaTable();
             }
         });
@@ -452,57 +458,9 @@ public class MainForm extends JFrame {
      * ファイル、フォルダを読込む。
      * @param files ファイルまたはフォルダの配列。
      */
-    private void readFile(File[] files) {
-        for (File f : files) {
-            readFile(f);
-        }
+    private void readMediaFile(File[] files) {
+        mediaList.addAll(mediaFileController.readFile(files, mediaList));
     }
-
-    /**
-     * ファイル、フォルダを読込む。
-     * @param file ファイルまたはフォルダ。
-     */
-    private void readFile(File file) {
-        if (file.isDirectory()) {
-            readFile(file.listFiles());
-        } else {
-            try {
-                String filePath = file.getCanonicalPath();
-
-                // 同じファイルがある場合は登録しない
-                if (mediaList.stream().anyMatch(r -> filePath.equals(r.getFirstData(MediaField.FILE_PATH)))) {
-                    return;
-                }
-
-                AudioFile f = AudioFileIO.read(file);
-                Tag tag = f.getTag();
-
-                FieldDataMap map = new FieldDataMap();
-                for (int i = 0; i < MediaField.values().length; i++) {
-                    MediaField field = MediaField.values()[i];
-                    if (field == MediaField.FILE_PATH) {
-                        map.put(field, file.getCanonicalPath());
-                        continue;
-//						} else if (field == MediaField.COVER_ART) {
-//							continue;
-                    }
-
-                    try {
-                        FieldKey key = FieldKey.valueOf(field.name());
-                        map.put(field, tag.getAll(key));
-                    } catch (IllegalArgumentException iae) {
-                        // TODO LOG
-                        System.out.println(iae);
-                    }
-                }
-
-                mediaList.add(map);
-            } catch (Exception e) {
-                System.out.println(e);
-            }
-        }
-    }
-
 
 
     // Button Action
@@ -818,7 +776,7 @@ public class MainForm extends JFrame {
                 List<File> files = (List<File>) t.getTransferData(DataFlavor.javaFileListFlavor);
 
                 // テキストエリアに表示するファイル名リストを作成する
-                readFile(files.toArray(new File[files.size()]));
+                readMediaFile(files.toArray(new File[files.size()]));
                 updateMediaTable();
             } catch (Exception e) {
                 e.printStackTrace();

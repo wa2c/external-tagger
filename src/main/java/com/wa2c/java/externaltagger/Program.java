@@ -2,6 +2,7 @@ package com.wa2c.java.externaltagger;
 
 import com.wa2c.java.externaltagger.common.Logger;
 import com.wa2c.java.externaltagger.model.Settings;
+import com.wa2c.java.externaltagger.view.MainForm;
 import org.jaudiotagger.tag.TagOptionSingleton;
 import org.jaudiotagger.tag.id3.valuepair.TextEncoding;
 import org.jaudiotagger.tag.reference.ID3V2Version;

@@ -1,15 +1,14 @@
-package com.wa2c.java.externaltagger;
+package com.wa2c.java.externaltagger.view.dialog;
 
 import javax.swing.*;
 import java.awt.event.*;
 
-public class SettingsDialog extends JDialog {
+public class DownloadConfirmationDialog extends JDialog {
     private JPanel contentPane;
     private JButton buttonOK;
     private JButton buttonCancel;
-    private JTextField textField1;
 
-    public SettingsDialog() {
+    public DownloadConfirmationDialog() {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
@@ -49,7 +48,7 @@ public class SettingsDialog extends JDialog {
     }
 
     private void onOK() {
-        this.result = JOptionPane.OK_CANCEL_OPTION;
+        this.result = JOptionPane.OK_OPTION;
         dispose();
     }
 
@@ -57,5 +56,4 @@ public class SettingsDialog extends JDialog {
         this.result = JOptionPane.CANCEL_OPTION;
         dispose();
     }
-
 }

@@ -95,6 +95,8 @@ public enum MediaField {
 
 	//COVER_ART,
 
+	LRC_FILE,
+
 	;
 
 

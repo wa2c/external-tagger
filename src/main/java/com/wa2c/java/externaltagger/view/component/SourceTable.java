@@ -1,4 +1,4 @@
-package com.wa2c.java.externaltagger.view;
+package com.wa2c.java.externaltagger.view.component;
 
 import javax.swing.*;
 

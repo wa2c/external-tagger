@@ -1,6 +1,6 @@
-package com.wa2c.java.externaltagger.view;
+package com.wa2c.java.externaltagger.view.component;
 
-import com.wa2c.java.externaltagger.source.AbstractExternalSource;
+import com.wa2c.java.externaltagger.controller.source.AbstractExternalSource;
 
 import javax.swing.table.DefaultTableModel;
 import java.util.List;

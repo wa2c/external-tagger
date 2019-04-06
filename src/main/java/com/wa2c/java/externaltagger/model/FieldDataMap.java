@@ -1,5 +1,6 @@
-package com.wa2c.java.externaltagger.common;
+package com.wa2c.java.externaltagger.model;
 
+import com.wa2c.java.externaltagger.common.AppUtils;
 import com.wa2c.java.externaltagger.value.MediaField;
 
 import java.util.ArrayList;
