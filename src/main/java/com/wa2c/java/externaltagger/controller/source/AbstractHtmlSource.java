@@ -1,23 +1,18 @@
 package com.wa2c.java.externaltagger.controller.source;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import com.gargoylesoftware.htmlunit.*;
-import com.gargoylesoftware.htmlunit.util.UrlUtils;
-import com.wa2c.java.externaltagger.model.FieldDataMap;
-import com.wa2c.java.externaltagger.common.Logger;
-import com.wa2c.java.externaltagger.value.MediaField;
-import org.apache.commons.lang3.StringUtils;
-
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.util.UrlUtils;
+import com.wa2c.java.externaltagger.common.Logger;
+import com.wa2c.java.externaltagger.model.FieldDataMap;
+import com.wa2c.java.externaltagger.value.MediaField;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 public abstract class AbstractHtmlSource extends AbstractExternalSource {

@@ -1,17 +1,16 @@
 package com.wa2c.java.externaltagger.controller.source;
 
+import com.wa2c.java.externaltagger.model.FieldDataMap;
+import com.wa2c.java.externaltagger.value.MediaField;
+import com.wa2c.java.externaltagger.value.SearchFieldUsing;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.wa2c.java.externaltagger.model.FieldDataMap;
-import com.wa2c.java.externaltagger.value.MediaField;
-import com.wa2c.java.externaltagger.value.SearchFieldUsing;
 
 
 

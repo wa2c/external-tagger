@@ -1,28 +1,14 @@
 package com.wa2c.java.externaltagger.controller;
 
-import com.cybozu.labs.langdetect.Detector;
-import com.cybozu.labs.langdetect.Language;
-import com.cybozu.labs.langdetect.LauguageDetectorFactoryUtil;
 import com.pedrohlc.viewlyricsppensearcher.LyricInfo;
 import com.pedrohlc.viewlyricsppensearcher.Result;
 import com.pedrohlc.viewlyricsppensearcher.ViewLyricsSearcher;
 import com.wa2c.java.externaltagger.common.Logger;
-import org.apache.commons.lang3.math.NumberUtils;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class ViewLyricsController {

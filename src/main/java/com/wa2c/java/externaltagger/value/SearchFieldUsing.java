@@ -3,7 +3,6 @@ package com.wa2c.java.externaltagger.value;
 import com.wa2c.java.externaltagger.common.AppUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.annotation.Resource;
 import java.util.ResourceBundle;
 
 /**

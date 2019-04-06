@@ -1,11 +1,12 @@
 package com.wa2c.java.externaltagger.view;
 
 import com.wa2c.java.externaltagger.Program;
-import com.wa2c.java.externaltagger.common.*;
+import com.wa2c.java.externaltagger.common.AppUtils;
+import com.wa2c.java.externaltagger.common.Logger;
 import com.wa2c.java.externaltagger.controller.MediaFileController;
+import com.wa2c.java.externaltagger.controller.source.*;
 import com.wa2c.java.externaltagger.model.FieldDataMap;
 import com.wa2c.java.externaltagger.model.Settings;
-import com.wa2c.java.externaltagger.controller.source.*;
 import com.wa2c.java.externaltagger.value.MediaField;
 import com.wa2c.java.externaltagger.value.SearchFieldUsing;
 import com.wa2c.java.externaltagger.view.component.SourceTable;
@@ -24,7 +25,8 @@ import org.jaudiotagger.tag.id3.AbstractID3Tag;
 import org.jaudiotagger.tag.id3.ID3v24Tag;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
@@ -36,8 +38,8 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -158,7 +160,6 @@ public class MainForm extends JFrame {
             fileDialog.setMultiSelectionEnabled(true);
             if (fileDialog.showOpenDialog(MainForm.this) == JFileChooser.APPROVE_OPTION) {
                 readMediaFile(fileDialog.getSelectedFiles());
-                updateMediaTable();
             }
         });
         mediaClearButton.addActionListener(e -> {
@@ -203,8 +204,13 @@ public class MainForm extends JFrame {
             }
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-                    removeSelectedMedia();
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_DELETE:
+                        removeSelectedMedia();
+                        break;
+                    case KeyEvent.VK_L:
+                        downloadLrc();
+                        break;
                 }
             }
         });
@@ -457,7 +463,9 @@ public class MainForm extends JFrame {
      * @param files ファイルまたはフォルダの配列。
      */
     private void readMediaFile(File[] files) {
-        mediaList.addAll(mediaFileController.readFile(files, mediaList));
+        List<FieldDataMap> map = mediaFileController.readFile(files, mediaList);
+        mediaList.addAll(map);
+        updateMediaTable();
     }
 
 
@@ -779,7 +787,6 @@ public class MainForm extends JFrame {
 
                 // テキストエリアに表示するファイル名リストを作成する
                 readMediaFile(files.toArray(new File[0]));
-                updateMediaTable();
             } catch (Exception e) {
                 e.printStackTrace();
             }

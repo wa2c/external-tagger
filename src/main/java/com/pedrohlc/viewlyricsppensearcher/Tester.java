@@ -1,13 +1,10 @@
 package com.pedrohlc.viewlyricsppensearcher;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.NoSuchAlgorithmException;
+import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.SAXException;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 
 public class Tester {

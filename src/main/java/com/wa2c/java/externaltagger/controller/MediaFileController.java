@@ -15,7 +15,6 @@ import org.jaudiotagger.tag.TagException;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,10 +35,17 @@ public class MediaFileController {
         List<FieldDataMap> list = new ArrayList<>(files.length);
         for (File f : files) {
             try {
-                FieldDataMap map = readFile(f, duplicatedData);
-                if (map == null)
+                if (!f.exists())
                     continue;
-                list.add(map);
+
+                if (f.isDirectory()) {
+                    list.addAll(readFile(f.listFiles(), duplicatedData));
+                } else {
+                    FieldDataMap map = readFile(f, duplicatedData);
+                    if (map == null)
+                        continue;
+                    list.add(map);
+                }
             } catch (Exception e) {
                 Logger.d(e);
             }
@@ -54,7 +60,7 @@ public class MediaFileController {
      * @return Read data.
      */
     public FieldDataMap readFile(File file, Collection<FieldDataMap> duplicatedData) throws TagException, ReadOnlyFileException, CannotReadException, InvalidAudioFrameException, IOException {
-        if (file == null)
+        if (file == null || !file.exists())
             return null;
 
         // remove duplicated file
@@ -78,8 +84,8 @@ public class MediaFileController {
                 File lrcFile = getLrcFile(file);
                 if (lrcFile != null && lrcFile.exists()) {
                     map.put(field, file.getCanonicalPath());
-                    continue;
                 }
+                continue;
             }
 
             try {

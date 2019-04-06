@@ -1,8 +1,6 @@
 package com.wa2c.java.externaltagger.view.dialog;
 
 import com.pedrohlc.viewlyricsppensearcher.LyricInfo;
-import com.pedrohlc.viewlyricsppensearcher.Result;
-import com.pedrohlc.viewlyricsppensearcher.ViewLyricsSearcher;
 import com.wa2c.java.externaltagger.common.Logger;
 import com.wa2c.java.externaltagger.controller.MediaFileController;
 import com.wa2c.java.externaltagger.controller.ViewLyricsController;
@@ -10,16 +8,9 @@ import com.wa2c.java.externaltagger.model.FieldDataMap;
 import com.wa2c.java.externaltagger.value.MediaField;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableModel;
 import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -35,7 +26,7 @@ public class LrcLyricsDialog extends JDialog {
     private JScrollPane lyricsScrollPane;
     private JScrollPane searchResultScrollPane;
 
-    private static String[] columnNames = {"Title", "Artist", "Album", "Length", "Rate", "RateCount", "Download"};
+    private static String[] columnNames = {"Title", "Artist", "Album", "Length", "Uploader", "Rate", "RateCount", "Download"};
 
     private final ViewLyricsController viewLyricsController = new ViewLyricsController();
     private final MediaFileController mediaFileController = new MediaFileController();
@@ -89,7 +80,7 @@ public class LrcLyricsDialog extends JDialog {
 
         // table
         searchResultTable.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting())
+            if (e.getValueIsAdjusting())
                 return;
             downloadLyrics();
         });
@@ -128,20 +119,23 @@ public class LrcLyricsDialog extends JDialog {
     }
 
     private void updateResultList() {
+        if (resultList.size() == 0)
+            return;
+
         List<String[]> dataList = new ArrayList<>(resultList.size());
         for (int i = 0; i < resultList.size(); i++) {
-            LyricInfo result = resultList.get(0);
+            LyricInfo result = resultList.get(i);
             String[] data = new String[columnNames.length];
             data[0] = result.getMusicTitle();
             data[1] = result.getMusicArtist();
             data[2] = result.getMusicAlbum();
             data[3] = result.getMusicLenght();
-            data[4] = result.getLyricRate().toString();
-            data[5] = result.getLyricRatesCount().toString();
-            data[6] = result.getLyricDownloadsCount().toString();
+            data[4] = result.getLyricUploader();
+            data[5] = result.getLyricRate().toString();
+            data[6] = result.getLyricRatesCount().toString();
+            data[7] = result.getLyricDownloadsCount().toString();
             dataList.add(data);
         }
-
 
         DefaultTableModel tableModel = new DefaultTableModel(dataList.toArray(new String[0][0]), columnNames);
         searchResultTable.setModel(tableModel);
@@ -150,6 +144,8 @@ public class LrcLyricsDialog extends JDialog {
         SwingUtilities.invokeLater(() -> {
             searchResultScrollPane.getVerticalScrollBar().setValue(0);
             searchResultScrollPane.getHorizontalScrollBar().setValue(0);
+            searchResultTable.setRowSelectionInterval(0, 0);
+            searchResultTable.requestFocus();
         });
     }
 
