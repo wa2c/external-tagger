@@ -17,6 +17,8 @@ public class Settings {
 
     public HashMap<String, Boolean> sourceEnabledMap = new HashMap<>();
 
+    public HashMap<String, HashMap<FieldDataMap, Boolean>> sourceFieldEnabledMap = new HashMap<>();
+
 
 
 

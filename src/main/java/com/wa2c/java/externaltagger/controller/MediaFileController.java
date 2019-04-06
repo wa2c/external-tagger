@@ -3,6 +3,7 @@ package com.wa2c.java.externaltagger.controller;
 import com.wa2c.java.externaltagger.common.Logger;
 import com.wa2c.java.externaltagger.model.FieldDataMap;
 import com.wa2c.java.externaltagger.value.MediaField;
+import org.apache.commons.io.FileUtils;
 import org.jaudiotagger.audio.AudioFile;
 import org.jaudiotagger.audio.AudioFileIO;
 import org.jaudiotagger.audio.exceptions.CannotReadException;
@@ -14,8 +15,11 @@ import org.jaudiotagger.tag.TagException;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 public class MediaFileController {
@@ -99,5 +103,37 @@ public class MediaFileController {
             return null;
         }
     }
+
+
+    /**
+     * Write file
+     * @param lrcFilePath LRC file path.
+     * @param lyricsText Lyrics text.
+     */
+    public void writeLrcFile(String lrcFilePath, String lyricsText) throws IOException {
+        FileUtils.write(new File(lrcFilePath), lyricsText, StandardCharsets.UTF_8);
+    }
+
+
+
+
+    /**
+     * Setting last modified time to files and directories.
+     * @param item file or directory.
+     * @param date last modified date.
+     */
+    public void setLastModified(File item, Date date) {
+        if (item.isDirectory()) {
+            item.setLastModified(date.getTime());
+
+            File[] children = item.listFiles();
+            for (File child : children) {
+                setLastModified(child, date);
+            }
+        } else {
+            item.setLastModified(date.getTime());
+        }
+    }
+
 
 }

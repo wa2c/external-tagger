@@ -10,6 +10,7 @@ import com.wa2c.java.externaltagger.value.MediaField;
 import com.wa2c.java.externaltagger.value.SearchFieldUsing;
 import com.wa2c.java.externaltagger.view.component.SourceTable;
 import com.wa2c.java.externaltagger.view.component.SourceTableModel;
+import com.wa2c.java.externaltagger.view.dialog.LrcLyricsDialog;
 import com.wa2c.java.externaltagger.view.dialog.SettingsDialog;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -68,6 +69,7 @@ public class MainForm extends JFrame {
     private JButton launchSettingsButton;
     private JButton searchIndividualButton;
     private SourceTable sourceTable;
+    private JButton fieldLrcDownloadButton;
 
 
     private final List<AbstractExternalSource> externalSource = new ArrayList<>();
@@ -100,38 +102,35 @@ public class MainForm extends JFrame {
 
         JPopupMenu popupMenu = new JPopupMenu();
         JMenuItem menuItem = new JMenuItem("Open Folder");
-        menuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (mediaTable.getSelectedRow() < 0)
-                    return;
+        menuItem.addActionListener(e -> {
+            if (mediaTable.getSelectedRow() < 0)
+                return;
 
-                int row = mediaTable.getSelectedRow();
-                String filePath = mediaList.get(row).getFirstData(MediaField.FILE_PATH);
-                File f = new File(filePath);
-                if (!f.exists() || !f.isFile()) {
-                    return;
+            int row = mediaTable.getSelectedRow();
+            String filePath = mediaList.get(row).getFirstData(MediaField.FILE_PATH);
+            File f = new File(filePath);
+            if (!f.exists() || !f.isFile()) {
+                return;
+            }
+
+            File dir = f.getParentFile();
+            try {
+                String cmd;
+                String osName = System.getProperty("os.name").toLowerCase();
+                if(osName.contains("windows")){
+                    cmd = "explorer";
+                } else if(osName.contains("mac")){
+                    cmd = "open";
+                } else if(osName.contains("linux")){
+                    cmd = "xdg-open";
+                } else {
+                    cmd = "open";
                 }
 
-                File dir = f.getParentFile();
-                try {
-                    String cmd = "";
-                    String osName = System.getProperty("os.name").toLowerCase();
-                    if(osName.contains("windows")){
-                        cmd = "explorer";
-                    } else if(osName.contains("mac")){
-                        cmd = "open";
-                    } else if(osName.contains("linux")){
-                        cmd = "xdg-open";
-                    } else {
-                        cmd = "open";
-                    }
-
-                    ProcessBuilder pb = new ProcessBuilder(cmd, dir.getCanonicalPath());
-                    Process process = pb.start();
-                } catch (IOException ex) {
-                    Logger.e(ex);
-                }
+                ProcessBuilder pb = new ProcessBuilder(cmd, dir.getCanonicalPath());
+                pb.start();
+            } catch (IOException ex) {
+                Logger.e(ex);
             }
         });
         popupMenu.add(menuItem);
@@ -145,7 +144,7 @@ public class MainForm extends JFrame {
         // TODO test
         JMenuItem testMenuItem = new JMenuItem("test");
         testMenuItem.addActionListener(e -> {
-            ;
+
         });
         popupMenu.add(testMenuItem);
 
@@ -158,7 +157,6 @@ public class MainForm extends JFrame {
             fileDialog.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
             fileDialog.setMultiSelectionEnabled(true);
             if (fileDialog.showOpenDialog(MainForm.this) == JFileChooser.APPROVE_OPTION) {
-                File file = fileDialog.getSelectedFile();
                 readMediaFile(fileDialog.getSelectedFiles());
                 updateMediaTable();
             }
@@ -181,6 +179,7 @@ public class MainForm extends JFrame {
         fieldWriteButton.addActionListener(e -> writeSelectedMediaInfo());
         fieldResetButton.addActionListener(e -> resetSelectedMediaInfo());
         fieldDeleteButton.addActionListener(e -> removeSelectedMedia());
+        fieldLrcDownloadButton.addActionListener(e -> downloadLrc());
         launchSettingsButton.addActionListener(e -> {
             SettingsDialog dialog = new SettingsDialog();
             dialog.pack();
@@ -319,7 +318,7 @@ public class MainForm extends JFrame {
      * @param column カラム番号。
      * @param margin マージン。
      */
-    public void adjustColumnSizes(JTable table, int column, int margin) {
+    private void adjustColumnSizes(JTable table, int column, int margin) {
         DefaultTableColumnModel colModel = (DefaultTableColumnModel) table.getColumnModel();
         TableColumn col = colModel.getColumn(column);
         int width;
@@ -370,12 +369,9 @@ public class MainForm extends JFrame {
                 sourceTableModel.addTableModelListener(this);
             }
         });
-        sourceTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent event) {
-                updateSourceParameter();
-                sourceParamPanel.updateUI();
-            }
+        sourceTable.getSelectionModel().addListSelectionListener(event -> {
+            updateSourceParameter();
+            sourceParamPanel.updateUI();
         });
 
         sourceTable.setModel(sourceTableModel);
@@ -435,6 +431,7 @@ public class MainForm extends JFrame {
             fieldWriteButton.setEnabled(true);
             fieldResetButton.setEnabled(true);
             fieldDeleteButton.setEnabled(true);
+            fieldLrcDownloadButton.setEnabled(true);
             FieldDataMap map = mediaList.get(rowIndex);
 
 
@@ -447,6 +444,7 @@ public class MainForm extends JFrame {
             fieldWriteButton.setEnabled(false);
             fieldResetButton.setEnabled(false);
             fieldDeleteButton.setEnabled(false);
+            fieldLrcDownloadButton.setEnabled(false);
             searchFieldTitleTextField.setText(null);
             searchFieldArtistTextField.setText(null);
             searchFieldAlbumTextField.setText(null);
@@ -617,6 +615,9 @@ public class MainForm extends JFrame {
                 for (FieldKey key : FieldKey.values()) {
                     try {
                         MediaField field = MediaField.valueOf(key.name());
+                        if (field == MediaField.FILE_PATH || field == MediaField.LRC_FILE) {
+                            continue;
+                        }
 
                         List<String> vals = map.get(field);
                         if (CollectionUtils.isEmpty(vals))
@@ -651,6 +652,7 @@ public class MainForm extends JFrame {
 
                         }
 
+
                         for (String val : vals) {
                             try {
                                 tag.addField(key, val);
@@ -672,7 +674,7 @@ public class MainForm extends JFrame {
             }
 
             if (fileDate != null) {
-                setLastModified(file.getParentFile(), fileDate);
+                mediaFileController.setLastModified(file.getParentFile(), fileDate);
             }
         }
     }
@@ -688,7 +690,6 @@ public class MainForm extends JFrame {
         int[] rows = mediaTable.getSelectedRows();
         for (int i = rows.length - 1; i >= 0; i--) {
             int r = rows[i];
-            String[] rowData = new String[FieldKey.values().length];
             for (int c = 0; c < fields.length; c++) {
                 mediaTableModel.setValueAt(mediaList.get(r).getFirstData(fields[c]), r, c);
             }
@@ -707,23 +708,24 @@ public class MainForm extends JFrame {
         updateMediaTable();
     }
 
+    private void downloadLrc() {
+        int row = mediaTable.getSelectedRow();
+        FieldDataMap map = mediaList.get(row);
 
-    /**
-     * Setting last modified time to files and directories.
-     * @param item file or directory.
-     * @param date last modified date.
-     */
-    private void setLastModified(File item, Date date) {
-        if (item.isDirectory()) {
-            item.setLastModified(date.getTime());
+        LrcLyricsDialog dialog = new LrcLyricsDialog(map);
+        dialog.pack();
+        int width = 800;
+        int height = 800;
+        int x = this.getX() + (this.getWidth() - width) / 2;
+        if (x < 0)
+            x = 0;
+        int y = this.getY() + (this.getHeight() - height) / 2;
+        if (y < 0)
+            y = 0;
 
-            File[] children = item.listFiles();
-            for (File child : children) {
-                setLastModified(child, date);
-            }
-        } else {
-            item.setLastModified(date.getTime());
-        }
+        dialog.setBounds(x, y, width, height);
+        dialog.setVisible(true);
+
     }
 
     private void createUIComponents() {
@@ -776,7 +778,7 @@ public class MainForm extends JFrame {
                 List<File> files = (List<File>) t.getTransferData(DataFlavor.javaFileListFlavor);
 
                 // テキストエリアに表示するファイル名リストを作成する
-                readMediaFile(files.toArray(new File[files.size()]));
+                readMediaFile(files.toArray(new File[0]));
                 updateMediaTable();
             } catch (Exception e) {
                 e.printStackTrace();
