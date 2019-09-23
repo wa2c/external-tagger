@@ -18,10 +18,12 @@ public class SourceJLyrics extends AbstractHtmlSource {
 
 	private static final String SITE_NAME = "J-Lyrics";
 	/** 検索URI。 */
-	private static final String SEARCH_URL = "http://search2.j-lyric.net/index.php?kt=%s&ct=2&ka=%s&ca=2";
+	private static final String SEARCH_URL = "http://search.j-lyric.net/index.php?kt=%s&ct=2&ka=%s&ca=1";
 	/** 検索結果アンカー。 */
 	//private static final String SEARCH_ANCHOR_XPATH = "//*[@id=\"lyricList\"]/div[2]/div[2]/a";
     private static final String SEARCH_ANCHOR_XPATH = "//*[@id=\"mnb\"]/div[2]/p[1]/a";
+
+
 
 	private final static HashSet<MediaField> searchFieldSet = new HashSet<MediaField>() { {
 		add(MediaField.TITLE);
@@ -71,6 +73,8 @@ public class SourceJLyrics extends AbstractHtmlSource {
 		return sourceConversionMap;
 	}
 
+	@Override
+	protected String getSearchAnchorXPath() { return SEARCH_ANCHOR_XPATH; }
 
 	@Override
 	public FieldDataMap getFieldDataMap(FieldDataMap fieldData, Map<MediaField, SearchFieldUsing> searchUsing) {
@@ -97,7 +101,7 @@ public class SourceJLyrics extends AbstractHtmlSource {
 		}
 
 		// 歌詞ページ取得
-        FieldDataMap outputMap = getTargetPage(searchUrl, SEARCH_ANCHOR_XPATH);
+        FieldDataMap outputMap = getTargetPage(searchUrl);
 		if (outputMap != null) {
 			// 特殊置換え
 			String outputTitle = outputMap.getFirstData(MediaField.TITLE);

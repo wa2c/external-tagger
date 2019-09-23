@@ -45,8 +45,6 @@ public class SourceAmazonJp extends AbstractHtmlSource {
 	public SourceAmazonJp() {
 	}
 
-
-
 	@Override
 	public String getName() {
 		return SITE_NAME;
@@ -66,6 +64,9 @@ public class SourceAmazonJp extends AbstractHtmlSource {
 	public HashMap<MediaField, SourceConversion> getConversionMap() {
 		return sourceConversionMap;
 	}
+
+	@Override
+	protected String getSearchAnchorXPath() { return SEARCH_ANCHOR_XPATH; }
 
 
 
@@ -96,7 +97,7 @@ public class SourceAmazonJp extends AbstractHtmlSource {
 		}
 
 		// 歌詞ページ取得
-		return getTargetPage(searchUrl, SEARCH_ANCHOR_XPATH);
+		return getTargetPage(searchUrl);
 	}
 
 }

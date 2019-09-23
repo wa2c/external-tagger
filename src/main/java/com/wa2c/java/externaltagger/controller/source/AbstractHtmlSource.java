@@ -10,6 +10,7 @@ import com.wa2c.java.externaltagger.model.FieldDataMap;
 import com.wa2c.java.externaltagger.value.MediaField;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,19 +18,20 @@ import java.util.stream.Stream;
 
 public abstract class AbstractHtmlSource extends AbstractExternalSource {
 
+	protected abstract String getSearchAnchorXPath();
 
-
-	private static WebClient getWebClient() {
-		    WebClient _webClient = new WebClient(BrowserVersion.CHROME);
+	protected static WebClient getWebClient() {
+		    WebClient _webClient = new WebClient(BrowserVersion.FIREFOX_60);
 			_webClient.getOptions().setJavaScriptEnabled(true);
 			_webClient.getOptions().setDownloadImages(false);
+			_webClient.getOptions().setRedirectEnabled(true);
 			_webClient.setAjaxController(new NicelyResynchronizingAjaxController());
 			_webClient.waitForBackgroundJavaScript(5000);
 			_webClient.getOptions().setRedirectEnabled(true);
 			_webClient.getOptions().setThrowExceptionOnScriptError(false);
+			_webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
 			_webClient.getOptions().setCssEnabled(false);
 			_webClient.getOptions().setUseInsecureSSL(true);
-			_webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
 			_webClient.getCookieManager().setCookiesEnabled(true);
 
 			_webClient.setAjaxController(new AjaxController(){
@@ -42,26 +44,6 @@ public abstract class AbstractHtmlSource extends AbstractExternalSource {
 
 			return _webClient;
 	}
-
-	/**
-	 * Source HTML Element.
-	 */
-	protected static class SourceConversion {
-		MediaField mediaField = null;
-		public String xPath = null;
-		public boolean brNewline = true;
-		public boolean trimSpace = true;
-		public String splitText = null;
-		public String removeRegexp = null;
-		public String replaceRegexp = null;
-		public String replaceOutput = null;
-
-		public SourceConversion(MediaField mediaField, String xPath) {
-			this.mediaField = mediaField;
-			this.xPath = xPath;
-		}
-	}
-
 
 
 	public abstract Set<MediaField>  getSearchField();
@@ -142,46 +124,19 @@ public abstract class AbstractHtmlSource extends AbstractExternalSource {
 	/**
 	 * ページを取得する。
 	 * @param searchUrl 検索URL。
-	 * @param searchAnchorXPath 検索結果のアンカーXPath。
 	 * @return ページ。
 	 */
-	protected FieldDataMap getTargetPage(String searchUrl, String searchAnchorXPath) {
+	//protected FieldDataMap getTargetPage(String searchUrl, String searchAnchorXPath) {
+	protected FieldDataMap getTargetPage(String searchUrl) {
 		Logger.d("Search Page URL: " + searchUrl);
-		Logger.d("Search Anchor XPath: " + searchAnchorXPath);
 
 		WebClient webClient = null;
-		FieldDataMap outputData = new FieldDataMap();
+		//FieldDataMap outputData = new FieldDataMap();
 		try {
 			webClient = getWebClient();
-
-			// 検索結果URL取得
-			HtmlPage page = (HtmlPage)webClient.getPage(searchUrl);
-			webClient.waitForBackgroundJavaScript(2000);
-			Logger.d(page.asXml());
-
-
-			List<?> list = page.getByXPath(searchAnchorXPath);
-			if (list == null || list.size() == 0) {
-				return null; // TODO LOG
-			}
-
-			HtmlAnchor anchor = (HtmlAnchor)list.get(0);
-			String mediaUrl = anchor.getHrefAttribute();
-			// TODO LOG
-
-			String lyricsPageUrl =  UrlUtils.resolveUrl(page.getBaseURL(), mediaUrl);
-			Logger.d("Lyrics Page URL: " + lyricsPageUrl);
-
-			// 歌詞ページ取得
-			HtmlPage mediaPage = (HtmlPage)webClient.getPage(lyricsPageUrl);
-
-			// 歌詞ページ取得
-			for (MediaField field : getResultField()) {
-				outputData.put(field, getElementText(mediaPage, getConversionMap().get(field)));
-			}
-
-			this.outputDataMap = outputData;
-			return outputData;
+			String lyricsPageUrl = getLyricsPageUrl(webClient, searchUrl);
+			this.outputDataMap = getLyricsPageData(webClient, lyricsPageUrl);
+			return this.outputDataMap;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			this.outputDataMap = null;
@@ -190,6 +145,40 @@ public abstract class AbstractHtmlSource extends AbstractExternalSource {
 			if (webClient != null)
 				webClient.close();
 		}
+	}
+
+	/**
+	 * 歌詞ページのURLを取得
+	 * @return 歌詞ページのURL
+	 */
+	protected String getLyricsPageUrl(WebClient webClient, String searchUrl) throws IOException {
+		HtmlPage page = webClient.getPage(searchUrl);
+		Logger.d(page.asXml());
+
+		List<?> list = page.getByXPath(getSearchAnchorXPath());
+		if (list == null || list.size() == 0) {
+			return null; // TODO LOG
+		}
+
+		HtmlAnchor anchor = (HtmlAnchor)list.get(0);
+		String relativeUrl = anchor.getHrefAttribute();
+		String absoluteUrl =  UrlUtils.resolveUrl(page.getBaseURL(), relativeUrl);
+		Logger.d("Lyrics Page URL: " + absoluteUrl);
+
+		return absoluteUrl;
+	}
+
+	/**
+	 * 歌詞ページからデータを取得
+	 * @return 歌詞ページの\\出力データ
+	 */
+	protected FieldDataMap getLyricsPageData(WebClient webClient, String lyricsPageUrl) throws IOException {
+		FieldDataMap outputData = new FieldDataMap();
+		HtmlPage lyricsPage = webClient.getPage(lyricsPageUrl);
+		for (MediaField field : getResultField()) {
+			outputData.put(field, getElementText(lyricsPage, getConversionMap().get(field)));
+		}
+		return outputData;
 	}
 
 }

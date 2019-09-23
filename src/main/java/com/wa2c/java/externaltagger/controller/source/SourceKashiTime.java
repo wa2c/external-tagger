@@ -70,6 +70,8 @@ public class SourceKashiTime extends AbstractHtmlSource {
 		return sourceConversionMap;
 	}
 
+	@Override
+	protected String getSearchAnchorXPath() { return SEARCH_ANCHOR_XPATH; }
 
 	@Override
 	public FieldDataMap getFieldDataMap(FieldDataMap fieldData, Map<MediaField, SearchFieldUsing> searchUsing) {
@@ -97,7 +99,7 @@ public class SourceKashiTime extends AbstractHtmlSource {
 		}
 
 		// 歌詞ページ取得
-		return getTargetPage(searchUrl, SEARCH_ANCHOR_XPATH);
+		return getTargetPage(searchUrl);
 	}
 
 

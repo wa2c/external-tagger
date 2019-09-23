@@ -304,6 +304,8 @@ public class MainForm extends JFrame {
         externalSource.add(source);
         source = new SourceKashiGet();
         externalSource.add(source);
+        source = new SourceLyricalNonsense();
+        externalSource.add(source);
 
         for (AbstractExternalSource s : externalSource) {
             Boolean val;
