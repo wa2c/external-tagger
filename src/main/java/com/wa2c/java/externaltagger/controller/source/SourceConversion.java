@@ -10,7 +10,8 @@ class SourceConversion {
     public String xPath = null;
     public boolean brNewline = true;
     public boolean trimSpace = true;
-    public String splitText = null;
+    public String splitText = "(\r\n|\n|\r)";
+    public int parseType = 0;
     public String removeRegexp = null;
     public String replaceRegexp = null;
     public String replaceOutput = null;

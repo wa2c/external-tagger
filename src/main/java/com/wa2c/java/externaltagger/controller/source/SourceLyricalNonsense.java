@@ -2,12 +2,14 @@ package com.wa2c.java.externaltagger.controller.source;
 
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.*;
+import com.gargoylesoftware.htmlunit.util.UrlUtils;
 import com.wa2c.java.externaltagger.common.Logger;
 import com.wa2c.java.externaltagger.model.FieldDataMap;
 import com.wa2c.java.externaltagger.value.MediaField;
 import com.wa2c.java.externaltagger.value.SearchFieldUsing;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
 import java.util.*;
 
 
@@ -29,7 +31,7 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 		put(MediaField.TITLE        , new SourceConversion(MediaField.TITLE        , "substring-before(//*[@id=\"Lyrics\"]/div[1]/div, '歌詞')" ));
 		put(MediaField.ARTIST       , new SourceConversion(MediaField.ARTIST       , "//*[@id=\"Lyrics\"]/div[1]/table/thead/tr[1]/td/a" ));
 		put(MediaField.COMMENT      , new SourceConversion(MediaField.COMMENT      , "//*[@id=\"Lyrics\"]/div[1]/table/thead/tr[2]/td" ));
-		put(MediaField.LYRICS       , new SourceConversion(MediaField.LYRICS       , "//*[@id=\"Lyrics\"]/div[3]/div/text()" ));
+		put(MediaField.LYRICS       , new SourceConversion(MediaField.LYRICS       , "//*[@id=\"Lyrics\"]/div[3]/div" ) {{ parseType = 1; }} );
 	} };
 
 	public SourceLyricalNonsense() {
@@ -63,23 +65,17 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 
 	@Override
 	public FieldDataMap getFieldDataMap(FieldDataMap fieldData, Map<MediaField, SearchFieldUsing> searchUsing) {
-		this.inputDataMap = fieldData;
-
 		String title = fieldData.getFirstData(MediaField.TITLE);
 		if (searchUsing.get(MediaField.TITLE) != null) title = searchUsing.get(MediaField.TITLE).format(title);
 		String artist = fieldData.getFirstData(MediaField.ARTIST);
 		if (searchUsing.get(MediaField.ARTIST) != null) artist = searchUsing.get(MediaField.ARTIST).format(artist);
 		String searchWord = (title + " " + artist).trim();
 		if (StringUtils.isEmpty(searchWord)) {
-			this.outputDataMap = null;
 			return null;
 		}
 
 		FieldDataMap outputData = new FieldDataMap();
-		WebClient webClient = null;
-		try {
-			webClient = getWebClient();
-
+		try (WebClient webClient = getWebClient()) {
 			// 検索結果URL取得
 			HtmlPage page = webClient.getPage(SEARCH_URL);
 			Logger.d(page.asXml());
@@ -101,48 +97,10 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 			outputData = getLyricsPageData(webClient, url);
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			this.outputDataMap = null;
 			return null;
-		} finally {
-			if (webClient != null)
-				webClient.close();
 		}
 
 		return outputData;
-
-//		// 検索テキスト
-//		String title = fieldData.getFirstData(MediaField.TITLE);
-//		if (searchUsing.get(MediaField.TITLE) != null) title = searchUsing.get(MediaField.TITLE).format(title);
-//		String artist = fieldData.getFirstData(MediaField.ARTIST);
-//		if (searchUsing.get(MediaField.ARTIST) != null) artist = searchUsing.get(MediaField.ARTIST).format(artist);
-//		String searchWord = (title + " " + artist).trim();
-//		if (StringUtils.isEmpty(searchWord)) {
-//			this.outputDataMap = null;
-//			return null;
-//		}
-//
-//
-//
-//
-//		String searchUrl;
-//		try {
-//			searchUrl = String.format(SEARCH_URL, URLEncoder.encode(title, "utf-8"), URLEncoder.encode(artist, "utf-8"));
-//		} catch (UnsupportedEncodingException e) {
-//			e.printStackTrace();
-//			this.outputDataMap = null;
-//			return null;
-//		}
-//
-//		// 歌詞ページ取得
-//		FieldDataMap outputMap = getTargetPage(searchUrl, SEARCH_ANCHOR_XPATH);
-//		if (outputMap != null) {
-//			// 特殊置換え
-//			String outputTitle = outputMap.getFirstData(MediaField.TITLE);
-//			if (StringUtils.isNotEmpty(outputTitle)) {
-//				outputMap.putNewData(MediaField.TITLE, outputTitle.replaceFirst(" 歌詞$", ""));
-//			}
-//		}
-//		return outputMap;
 	}
 
 }

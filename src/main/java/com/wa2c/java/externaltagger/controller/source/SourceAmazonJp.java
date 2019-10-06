@@ -72,8 +72,6 @@ public class SourceAmazonJp extends AbstractHtmlSource {
 
 	@Override
 	public FieldDataMap getFieldDataMap(FieldDataMap fieldData, Map<MediaField, SearchFieldUsing> searchUsing) {
-		this.inputDataMap = fieldData;
-
 		// 検索テキスト
 		String title = fieldData.getFirstData(MediaField.TITLE);
 		if (searchUsing.get(MediaField.TITLE) != null) title = searchUsing.get(MediaField.TITLE).format(title);
@@ -83,7 +81,6 @@ public class SourceAmazonJp extends AbstractHtmlSource {
 		if (searchUsing.get(MediaField.ALBUM) != null) album = searchUsing.get(MediaField.ALBUM).format(album);
 		String searchWord = (album + " " + artist).trim();
 		if (StringUtils.isEmpty(searchWord)) {
-			this.outputDataMap = null;
 			return null;
 		}
 
@@ -92,12 +89,11 @@ public class SourceAmazonJp extends AbstractHtmlSource {
 			searchUrl = String.format(SEARCH_URL, URLEncoder.encode(album + " " + artist + " CD", "utf-8")); // CDのみを対象とするため、CDを追加
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
-			this.outputDataMap = null;
 			return null;
 		}
 
 		// 歌詞ページ取得
-		return getTargetPage(searchUrl);
+		return getMeidaData(searchUrl);
 	}
 
 }

@@ -78,8 +78,6 @@ public class SourceJLyrics extends AbstractHtmlSource {
 
 	@Override
 	public FieldDataMap getFieldDataMap(FieldDataMap fieldData, Map<MediaField, SearchFieldUsing> searchUsing) {
-		this.inputDataMap = fieldData;
-
 		// 検索テキスト
 		String title = fieldData.getFirstData(MediaField.TITLE);
 		if (searchUsing.get(MediaField.TITLE) != null) title = searchUsing.get(MediaField.TITLE).format(title);
@@ -87,7 +85,6 @@ public class SourceJLyrics extends AbstractHtmlSource {
 		if (searchUsing.get(MediaField.ARTIST) != null) artist = searchUsing.get(MediaField.ARTIST).format(artist);
 		String searchWord = (title + " " + artist).trim();
 		if (StringUtils.isEmpty(searchWord)) {
-			this.outputDataMap = null;
 			return null;
 		}
 
@@ -96,12 +93,11 @@ public class SourceJLyrics extends AbstractHtmlSource {
 			searchUrl = String.format(SEARCH_URL, URLEncoder.encode(title, "utf-8"), URLEncoder.encode(artist, "utf-8"));
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
-			this.outputDataMap = null;
 			return null;
 		}
 
 		// 歌詞ページ取得
-        FieldDataMap outputMap = getTargetPage(searchUrl);
+        FieldDataMap outputMap = getMeidaData(searchUrl);
 		if (outputMap != null) {
 			// 特殊置換え
 			String outputTitle = outputMap.getFirstData(MediaField.TITLE);

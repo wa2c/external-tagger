@@ -10,11 +10,6 @@ import java.util.Set;
 
 public abstract class AbstractExternalSource {
 
-	protected FieldDataMap inputDataMap;
-	protected FieldDataMap outputDataMap;
-
-
-
 	public abstract String getName();
 
 	//public abstract Set<MediaField> getTargetSource();
