@@ -1,15 +1,16 @@
 package com.wa2c.java.externaltagger.controller.source;
 
 import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.*;
-import com.gargoylesoftware.htmlunit.util.UrlUtils;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import com.wa2c.java.externaltagger.common.Logger;
 import com.wa2c.java.externaltagger.model.FieldDataMap;
 import com.wa2c.java.externaltagger.value.MediaField;
 import com.wa2c.java.externaltagger.value.SearchFieldUsing;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
 import java.util.*;
 
 
