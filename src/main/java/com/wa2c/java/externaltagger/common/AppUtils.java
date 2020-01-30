@@ -142,7 +142,7 @@ public final class AppUtils {
 			return "";
 
 		return text
-				.replaceAll("\\s+(-|－|―|ー|ｰ|~|～|〜|〰|=|＝).*", "");
+				.replaceAll("\\s+(-|－|―|—|ー|ｰ|~|～|〜|〰|=|＝).*", "");
 	}
 
 	/**

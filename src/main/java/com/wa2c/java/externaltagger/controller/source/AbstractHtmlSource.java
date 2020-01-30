@@ -123,11 +123,15 @@ public abstract class AbstractHtmlSource extends AbstractExternalSource {
 				parseLyrics(builder, child);
 			}
 		} else {
-			String br = "\r\n\r\n";
+			//String br = "\r\n\r\n";
+			String br = "\r\n";
+			String text = parent.getTextContent().trim();
 			if (parent instanceof HtmlBreak) {
 				br = "\r\n";
+			} else if (text.isEmpty()) {
+				br = "\r\n";
 			}
-			builder.append(parent.getTextContent()).append(br);
+			builder.append(text).append(br);
 		}
 	}
 

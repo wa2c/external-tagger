@@ -31,7 +31,7 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 	protected final static HashMap<MediaField, SourceConversion> sourceConversionMap = new HashMap<MediaField, SourceConversion>() { {
 		put(MediaField.TITLE        , new SourceConversion(MediaField.TITLE        , "substring-before(//*[@id=\"Lyrics\"]/div[1]/div, '歌詞')" ));
 		put(MediaField.ARTIST       , new SourceConversion(MediaField.ARTIST       , "//*[@id=\"Lyrics\"]/div[1]/table/thead/tr[1]/td/a" ));
-		put(MediaField.COMMENT      , new SourceConversion(MediaField.COMMENT      , "//*[@id=\"Lyrics\"]/div[1]/table/thead/tr[2]/td" ));
+		put(MediaField.COMMENT      , new SourceConversion(MediaField.COMMENT      , "//*[@id=\"content2\"]/div[2]/div/span[@class=\"lptitlet\"]" ));
 		put(MediaField.LYRICS       , new SourceConversion(MediaField.LYRICS       , "//*[@id=\"Lyrics\"]/div[3]/div" ) {{ parseType = 1; }} );
 	} };
 
@@ -91,11 +91,25 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 				return null;
 			button.get(0).click();
 
-			List<HtmlAnchor> anchor = page.getByXPath("//*[@id=\"___gcse_0\"]/div/div/div/div[5]/div[2]/div/div/div[1]/div[1]/div[1]/div/a");
+			List<HtmlAnchor> anchor = page.getByXPath("//*[@id=\"___gcse_0\"]/div/div/div/div[5]/div[2]/div/div/div[1]/div[1]/div[1]/div[1]/div/a");
 			if (anchor == null || anchor.isEmpty())
 				return null;
 			String url = anchor.get(0).getHrefAttribute();
 			outputData = getLyricsPageData(webClient, url);
+
+			String comment = outputData.getFirstData(MediaField.COMMENT);
+			if (StringUtils.isNotEmpty(comment)) {
+				if (comment.contains("アニメ"))
+					outputData.put(MediaField.GENRE, "Anime");
+				else if (comment.contains("劇場"))
+					outputData.put(MediaField.GENRE, "Anime");
+				else if (comment.contains("ゲーム"))
+					outputData.put(MediaField.GENRE, "Game");
+			}
+			if (StringUtils.isEmpty(outputData.getFirstData(MediaField.COMMENT)))
+				outputData.put(MediaField.GENRE, "JPop");
+
+
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			return null;
