@@ -1,5 +1,6 @@
 package com.wa2c.java.externaltagger.view;
 
+import com.pedrohlc.viewlyricsppensearcher.LyricInfo;
 import com.wa2c.java.externaltagger.Program;
 import com.wa2c.java.externaltagger.common.AppUtils;
 import com.wa2c.java.externaltagger.common.Logger;
@@ -23,6 +24,10 @@ import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
 import org.jaudiotagger.tag.id3.AbstractID3Tag;
 import org.jaudiotagger.tag.id3.ID3v24Tag;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.swing.*;
 import javax.swing.event.TableModelEvent;
@@ -31,6 +36,8 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -40,6 +47,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
 import java.util.Timer;
@@ -119,25 +127,7 @@ public class MainForm extends JFrame {
                 return;
             }
 
-            File dir = f.getParentFile();
-            try {
-                String cmd;
-                String osName = System.getProperty("os.name").toLowerCase();
-                if(osName.contains("windows")){
-                    cmd = "explorer";
-                } else if(osName.contains("mac")){
-                    cmd = "open";
-                } else if(osName.contains("linux")){
-                    cmd = "xdg-open";
-                } else {
-                    cmd = "open";
-                }
-
-                ProcessBuilder pb = new ProcessBuilder(cmd, dir.getCanonicalPath());
-                pb.start();
-            } catch (IOException ex) {
-                Logger.e(ex);
-            }
+            AppUtils.openFolder(f);
         });
         popupMenu.add(menuItem);
         JMenuItem resetMenuItem = new JMenuItem("Reset");
@@ -445,6 +435,7 @@ public class MainForm extends JFrame {
             fieldResetButton.setEnabled(true);
             fieldDeleteButton.setEnabled(true);
             fieldLrcDownloadButton.setEnabled(true);
+            fieldDateUpdateButton.setEnabled(true);
             FieldDataMap map = mediaList.get(rowIndex);
 
 
@@ -457,6 +448,7 @@ public class MainForm extends JFrame {
             fieldWriteButton.setEnabled(false);
             fieldResetButton.setEnabled(false);
             fieldDeleteButton.setEnabled(false);
+            fieldDateUpdateButton.setEnabled(false);
             fieldLrcDownloadButton.setEnabled(false);
             searchFieldTitleTextField.setText(null);
             searchFieldArtistTextField.setText(null);
@@ -743,13 +735,27 @@ public class MainForm extends JFrame {
 
     }
 
+    /**
+     * ディレクトリの日付をリリース日にして読み取り専用とする
+     */
     private void updateDate() {
         int[] rows = mediaTable.getSelectedRows();
-        for (int i = rows.length - 1; i >= 0; i--) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        HashSet<String> completedPathSet = new HashSet<>();
+
+       for (int i = rows.length - 1; i >= 0; i--) {
+           int row = rows[i];
+           FieldDataMap map = mediaList.get(row);
+           File file = new File(map.getFirstData(MediaField.FILE_PATH));
+           File parent = file.getParentFile();
+           if (completedPathSet.contains(parent.getAbsolutePath()))
+               continue; // 処理済パスは実行しない
+           completedPathSet.add(parent.getAbsolutePath()); // パス追加
+
             try {
-                FieldDataMap map = mediaList.get(i);
                 String mbid = map.getFirstData(MediaField.MUSICBRAINZ_RELEASEID);
                 URL url = new URL("https://musicbrainz.org/ws/2/release/" + mbid);
+                Logger.d(url.toString());
 
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setAllowUserInteraction(false);
@@ -759,27 +765,32 @@ public class MainForm extends JFrame {
 
                 int httpStatusCode = conn.getResponseCode();
                 if(httpStatusCode != HttpURLConnection.HTTP_OK){
+                    Logger.d("STATUS CODE: " + httpStatusCode);
+                    conn.disconnect();
                     throw new Exception();
                 }
+                Logger.d("RESPONSE MESSAGE: " + conn.getResponseMessage());
 
                 // Input Stream
-                try (InputStream inputStream = conn.getInputStream();
-                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-                    byte[] buffer = new byte[4096];
-                    while (true) {
-                        int len = inputStream.read(buffer);
-                        if (len < 0) {
-                            break;
-                        }
-                        outputStream.write(buffer, 0, len);
+                try (InputStream inputStream = conn.getInputStream()) {
+                    // Parse XML
+                    Element resultRootElem = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream).getDocumentElement();
+                    Node releaseNode = resultRootElem.getFirstChild();
+                    NodeList list = releaseNode.getChildNodes();
+                    for (int index = 0; index < list.getLength(); index++) {
+                        Node targetNode = list.item(index);
+                        if (!targetNode.getNodeName().equals("date")) continue;
+                        Date date = dateFormat.parse(targetNode.getTextContent());
+                        AppUtils.updateFolderDate(parent, date);
+                        break;
                     }
-                    byte[] lyricsBytes = outputStream.toByteArray();
-                    String xml = new String(lyricsBytes, Charset.defaultCharset());
-                    Logger.d(xml);
+                } finally {
+                    conn.disconnect();
                 }
 
             } catch (Exception e) {
                 Logger.e(e);
+                Logger.e("更新失敗: " + parent.getAbsolutePath());
             }
         }
         updateMediaTable();

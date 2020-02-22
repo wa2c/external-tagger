@@ -3,7 +3,10 @@ package com.wa2c.java.externaltagger.common;
 import com.wa2c.java.externaltagger.value.SearchFieldUsing;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.Normalizer;
+import java.util.Date;
 
 public final class AppUtils {
 
@@ -244,6 +247,61 @@ public final class AppUtils {
 			return "Other";
 		} else {
 			return "JPop";
+		}
+	}
+
+	/**
+	 * フォルダを開く
+	 * @param folder フォルダ
+	 */
+	public static boolean openFolder(File folder) {
+		File dir = folder.getParentFile();
+		try {
+			String cmd;
+			String osName = System.getProperty("os.name").toLowerCase();
+			if(osName.contains("windows")){
+				cmd = "explorer";
+			} else if(osName.contains("mac")){
+				cmd = "open";
+			} else if(osName.contains("linux")){
+				cmd = "xdg-open";
+			} else {
+				cmd = "open";
+			}
+
+			ProcessBuilder pb = new ProcessBuilder(cmd, dir.getCanonicalPath());
+			pb.start();
+			return true;
+		} catch (IOException ex) {
+			Logger.e(ex);
+			return false;
+		}
+	}
+
+	/**
+	 * フォルダの日付・読み取り専用状態を更新する
+	 */
+	public static void updateFolderDate(File file, Date date) {
+
+		if (file.isDirectory()) {
+			File[] list = file.listFiles();
+			for (File f : list) {
+				updateFolderDate(f, date);
+			}
+		}
+
+		// 日付・読み取り専用状態の設定
+		file.setReadOnly();
+		file.setLastModified(date.getTime());
+
+		// Windowsはフォルダ属性設定
+		if(System.getProperty("os.name").toLowerCase().contains("windows")){
+			try {
+				ProcessBuilder pb = new ProcessBuilder("attrib", "+r", file.getCanonicalPath());
+				pb.start().waitFor();
+			} catch (Exception e) {
+				Logger.e(e);
+			}
 		}
 	}
 
