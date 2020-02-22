@@ -226,7 +226,7 @@
               </splitpane>
             </children>
           </grid>
-          <grid id="f6cbb" layout-manager="GridLayoutManager" row-count="1" column-count="11" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="f6cbb" layout-manager="GridLayoutManager" row-count="1" column-count="12" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="8" left="0" bottom="0" right="0"/>
             <constraints border-constraint="South"/>
             <properties/>
@@ -324,7 +324,7 @@
               </component>
               <hspacer id="258d3">
                 <constraints>
-                  <grid row="0" column="9" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="10" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
               </hspacer>
               <hspacer id="948c">
@@ -343,7 +343,7 @@
               </grid>
               <component id="260d3" class="javax.swing.JButton" binding="launchSettingsButton">
                 <constraints>
-                  <grid row="0" column="10" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false">
+                  <grid row="0" column="11" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false">
                     <preferred-size width="96" height="40"/>
                   </grid>
                 </constraints>
@@ -365,9 +365,22 @@
                 </constraints>
                 <properties>
                   <enabled value="false"/>
-                  <label resource-bundle="resource" key="label.Delete"/>
+                  <label resource-bundle="resource" key="label.LrcDownload"/>
                   <preferredSize width="98" height="49"/>
                   <text resource-bundle="resource" key="label.LrcDownload"/>
+                </properties>
+              </component>
+              <component id="41e20" class="javax.swing.JButton" binding="fieldDateUpdateButton">
+                <constraints>
+                  <grid row="0" column="9" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false">
+                    <preferred-size width="96" height="40"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <enabled value="false"/>
+                  <label resource-bundle="resource" key="label.DateUpdate"/>
+                  <preferredSize width="98" height="49"/>
+                  <text value="日付更新"/>
                 </properties>
               </component>
             </children>

@@ -35,11 +35,14 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.List;
 import java.util.*;
+import java.util.Timer;
 import java.util.stream.Collectors;
 
 /**
@@ -72,6 +75,7 @@ public class MainForm extends JFrame {
     private JButton searchIndividualButton;
     private SourceTable sourceTable;
     private JButton fieldLrcDownloadButton;
+    private JButton fieldDateUpdateButton;
 
 
     private final List<AbstractExternalSource> externalSource = new ArrayList<>();
@@ -181,6 +185,7 @@ public class MainForm extends JFrame {
         fieldResetButton.addActionListener(e -> resetSelectedMediaInfo());
         fieldDeleteButton.addActionListener(e -> removeSelectedMedia());
         fieldLrcDownloadButton.addActionListener(e -> downloadLrc());
+        fieldDateUpdateButton.addActionListener(e -> updateDate());
         launchSettingsButton.addActionListener(e -> {
             SettingsDialog dialog = new SettingsDialog();
             dialog.pack();
@@ -736,6 +741,48 @@ public class MainForm extends JFrame {
         dialog.setBounds(x, y, width, height);
         dialog.setVisible(true);
 
+    }
+
+    private void updateDate() {
+        int[] rows = mediaTable.getSelectedRows();
+        for (int i = rows.length - 1; i >= 0; i--) {
+            try {
+                FieldDataMap map = mediaList.get(i);
+                String mbid = map.getFirstData(MediaField.MUSICBRAINZ_RELEASEID);
+                URL url = new URL("https://musicbrainz.org/ws/2/release/" + mbid);
+
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setAllowUserInteraction(false);
+                conn.setInstanceFollowRedirects(true);
+                conn.setRequestMethod("GET");
+                conn.connect();
+
+                int httpStatusCode = conn.getResponseCode();
+                if(httpStatusCode != HttpURLConnection.HTTP_OK){
+                    throw new Exception();
+                }
+
+                // Input Stream
+                try (InputStream inputStream = conn.getInputStream();
+                     ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+                    byte[] buffer = new byte[4096];
+                    while (true) {
+                        int len = inputStream.read(buffer);
+                        if (len < 0) {
+                            break;
+                        }
+                        outputStream.write(buffer, 0, len);
+                    }
+                    byte[] lyricsBytes = outputStream.toByteArray();
+                    String xml = new String(lyricsBytes, Charset.defaultCharset());
+                    Logger.d(xml);
+                }
+
+            } catch (Exception e) {
+                Logger.e(e);
+            }
+        }
+        updateMediaTable();
     }
 
     private void createUIComponents() {
