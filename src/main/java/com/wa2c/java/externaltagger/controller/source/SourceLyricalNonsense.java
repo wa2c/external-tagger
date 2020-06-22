@@ -1,10 +1,8 @@
 package com.wa2c.java.externaltagger.controller.source;
 
 import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
-import com.gargoylesoftware.htmlunit.html.HtmlElement;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
+import com.gargoylesoftware.htmlunit.html.*;
+import com.wa2c.java.externaltagger.common.AppUtils;
 import com.wa2c.java.externaltagger.common.Logger;
 import com.wa2c.java.externaltagger.model.FieldDataMap;
 import com.wa2c.java.externaltagger.value.MediaField;
@@ -29,10 +27,12 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 	} };
 
 	protected final static HashMap<MediaField, SourceConversion> sourceConversionMap = new HashMap<MediaField, SourceConversion>() { {
-		put(MediaField.TITLE        , new SourceConversion(MediaField.TITLE        , "substring-before(//*[@id=\"Lyrics\"]/div[1]/div, '歌詞')" ));
-		put(MediaField.ARTIST       , new SourceConversion(MediaField.ARTIST       , "//*[@id=\"Lyrics\"]/div[1]/table/thead/tr[1]/td/a" ));
-		put(MediaField.COMMENT      , new SourceConversion(MediaField.COMMENT      , "//*[@id=\"content2\"]/div[2]/div/span[@class=\"lptitlet\"]" ));
-		put(MediaField.LYRICS       , new SourceConversion(MediaField.LYRICS       , "//*[@id=\"Lyrics\"]/div[3]/div" ) {{ parseType = 1; }} );
+		put(MediaField.TITLE        , new SourceConversion(MediaField.TITLE        , "substring-before(//*[@id=\"layout\"]/div[1]/div[1]/div/div/div[2]/h1, '歌詞')" ));
+		put(MediaField.ARTIST       , new SourceConversion(MediaField.ARTIST       , "//*[@id=\"layout\"]/div[1]/div[1]/div/div/div[2]/dl/dd[1]/a" ));
+//		put(MediaField.COMPOSER       , new SourceConversion(MediaField.COMPOSER       , "//*[@id=\"Lyrics\"]/div[5]/table/thead/tr[4]/td" ));
+//		put(MediaField.LYRICIST       , new SourceConversion(MediaField.LYRICIST       , "//*[@id=\"Lyrics\"]/div[5]/table/thead/tr[3]/td" ));
+		put(MediaField.COMMENT      , new SourceConversion(MediaField.COMMENT      , "//*[@id=\"layout\"]/div[1]/div[1]/div/div/div[2]/dl/dd[2]/a" ));
+		put(MediaField.LYRICS       , new SourceConversion(MediaField.LYRICS       , "//*[@id=\"Lyrics\"]/div[3]" ) {{ parseType = 0; }} );
 	} };
 
 	public SourceLyricalNonsense() {
@@ -75,7 +75,7 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 			return null;
 		}
 
-		FieldDataMap outputData = new FieldDataMap();
+
 		try (WebClient webClient = getWebClient()) {
 			// 検索結果URL取得
 			HtmlPage page = webClient.getPage(SEARCH_URL);
@@ -95,27 +95,95 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 			if (anchor == null || anchor.isEmpty())
 				return null;
 			String url = anchor.get(0).getHrefAttribute();
-			outputData = getLyricsPageData(webClient, url);
 
-			String comment = outputData.getFirstData(MediaField.COMMENT);
-			if (StringUtils.isNotEmpty(comment)) {
-				if (comment.contains("アニメ"))
-					outputData.put(MediaField.GENRE, "Anime");
-				else if (comment.contains("劇場"))
-					outputData.put(MediaField.GENRE, "Anime");
-				else if (comment.contains("ゲーム"))
-					outputData.put(MediaField.GENRE, "Game");
+			HtmlPage lyricsPage = webClient.getPage(url);
+			final FieldDataMap outputData = getLyricsPageData(lyricsPage);
+
+			//List<HtmlTable> infoTables = lyricsPage.getByXPath("//*[@id=\"Lyrics\"]/div[6]/table");
+			List<HtmlTable> infoTables = lyricsPage.getByXPath("//*[@id=\"Lyrics\"]/*/table[@class=\"lyricdetails\"]");
+			if (!infoTables.isEmpty()) {
+				HtmlTable table = infoTables.get(0);
+
+				// 作曲者・作詞者
+				table.getRows().forEach(row -> {
+					if (row.getCell(0).getVisibleText().contains("作曲")) {
+						outputData.putNewData(MediaField.COMPOSER, row.getCell(1).getVisibleText().trim());
+					}
+					if (row.getCell(0).getVisibleText().contains("作詞")) {
+						outputData.putNewData(MediaField.LYRICIST, row.getCell(1).getVisibleText().trim());
+					}
+				});
 			}
-			if (StringUtils.isEmpty(outputData.getFirstData(MediaField.COMMENT)))
-				outputData.put(MediaField.GENRE, "JPop");
 
 
+
+//			// コメント拡張情報情報
+//			String workTitle = outputData.getFirstData(MediaField.COMMENT);
+//			List<HtmlAnchor> extraAnchor = lyricsPage.getByXPath(sourceConversionMap.get(MediaField.COMMENT).xPath);
+//			if (extraAnchor != null && !extraAnchor.isEmpty()) {
+//				HtmlPage extraPage = webClient.getPage(extraAnchor.get(0).getHrefAttribute());
+//				List<HtmlElement> workGenres = extraPage.getByXPath("//*[@id=\"content2\"]/div[1]/div/div/div/div[1]/span[2]");
+//				String workGenre = "";
+//				if (!workGenres.isEmpty()) {
+//					workGenre  = workGenres.get(0).asText();
+//				}
+//
+//				List<HtmlTable> workTable = extraPage.getByXPath("//*[@id=\"content2\"]/div[1]/div/div/div/table");
+//				if (!workTable.isEmpty()) {
+//					String opedType = "";
+//					HtmlTable table = workTable.get(0);
+//					for (int i = 0; i < table.getRowCount(); i++) {
+//						HtmlTableRow row = table.getRow(0);
+//						String rowTitle = table.getCellAt(i, 0).asText().trim();
+//						if (rowTitle.contains(outputData.getFirstData(MediaField.TITLE))) {
+//							opedType = table.getCellAt(i, 2).getFirstElementChild().getTextContent();
+//							break;
+//						}
+//					}
+//					List<String> works = new ArrayList<>();
+//					works.add(workGenre);
+//					works.add(workTitle);
+//					works.add(opedType);
+//					outputData.putNewData(MediaField.COMMENT, StringUtils.join(works, " "));
+//				}
+//			}
+
+			outputData.put(MediaField.GENRE, getGenreCode(outputData.getFirstData(MediaField.COMMENT)));
+			return outputData;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			return null;
 		}
+	}
 
-		return outputData;
+	/**
+	 * ジャンルの日本名
+	 */
+	private String getGenreJp(String genre) {
+		if (genre.contains("Anime"))
+			return "アニメ";
+		else if (genre.contains("Movie"))
+			return "劇場アニメ";
+		else if (genre.contains("Game"))
+			return "ゲーム";
+		else
+			return null;
+	}
+
+	/**
+	 * ジャンルのコード
+	 */
+	private String getGenreCode(String genre) {
+		if (StringUtils.isEmpty(genre)) {
+			return "JPop";
+		} if (genre.contains("Anime") || genre.contains("アニメ"))
+			return "Anime";
+		else if (genre.contains("Movie") || genre.contains("映画"))
+			return "Anime";
+		else if (genre.contains("Game") || genre.contains("ゲーム"))
+			return "Game";
+		else
+			return "JPop";
 	}
 
 }

@@ -145,7 +145,8 @@ public abstract class AbstractHtmlSource extends AbstractExternalSource {
 
         try (WebClient webClient = getWebClient()) {
             String lyricsPageUrl = getLyricsPageUrl(webClient, searchUrl);
-            return getLyricsPageData(webClient, lyricsPageUrl);
+			HtmlPage lyricsPage = webClient.getPage(lyricsPageUrl);
+            return getLyricsPageData(lyricsPage);
         } catch (Exception ex) {
             ex.printStackTrace();
             return null;
@@ -177,11 +178,12 @@ public abstract class AbstractHtmlSource extends AbstractExternalSource {
 	 * 歌詞ページからデータを取得
 	 * @return 歌詞ページの\\出力データ
 	 */
-	protected FieldDataMap getLyricsPageData(WebClient webClient, String lyricsPageUrl) throws IOException {
+	protected FieldDataMap getLyricsPageData(HtmlPage lyricsPage) throws IOException {
 		FieldDataMap outputData = new FieldDataMap();
-		HtmlPage lyricsPage = webClient.getPage(lyricsPageUrl);
 		for (MediaField field : getResultField()) {
 			List<String> values = getElementText(lyricsPage, getConversionMap().get(field));
+			if (values == null)
+				continue;
 			if (field != MediaField.LYRICS) {
 				outputData.put(field, values);
 			} else {
