@@ -519,7 +519,7 @@ public class MainForm extends JFrame {
             FieldDataMap resultMap = source.getFieldDataMap(conditionMap, fieldUsing);
             if (resultMap != null) return resultMap;
         }
-        return null;
+        return new FieldDataMap();
     }
 
     /**

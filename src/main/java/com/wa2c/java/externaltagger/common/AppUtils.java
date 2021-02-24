@@ -41,6 +41,7 @@ public final class AppUtils {
 			case Normalize:
 				return normalizeTitle(text);
 			case Raw:
+			case Edit:
 				return text;
 			default:
 				return "";
@@ -145,7 +146,7 @@ public final class AppUtils {
 			return "";
 
 		return text
-				.replaceAll("\\s+(-|－|―|—|ー|ｰ|~|～|〜|〰|=|＝).*", "");
+				.replaceAll("\\s+(-|－|―|—|ー|ｰ|~|～|〜|〜|〰|=|＝).*", "");
 	}
 
 	/**
