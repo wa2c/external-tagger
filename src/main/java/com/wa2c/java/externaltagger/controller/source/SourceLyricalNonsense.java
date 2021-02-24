@@ -31,7 +31,7 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 		put(MediaField.ARTIST       , new SourceConversion(MediaField.ARTIST       , "//*[@id=\"layout\"]/div[1]/div[1]/div/div/div[2]/dl/dd[1]/a" ));
 //		put(MediaField.COMPOSER       , new SourceConversion(MediaField.COMPOSER       , "//*[@id=\"Lyrics\"]/div[5]/table/thead/tr[4]/td" ));
 //		put(MediaField.LYRICIST       , new SourceConversion(MediaField.LYRICIST       , "//*[@id=\"Lyrics\"]/div[5]/table/thead/tr[3]/td" ));
-		put(MediaField.COMMENT      , new SourceConversion(MediaField.COMMENT      , "//*[@id=\"layout\"]/div[1]/div[1]/div/div/div[2]/dl/dd[2]/a" ));
+		put(MediaField.COMMENT      , new SourceConversion(MediaField.COMMENT      , "//*[@id=\"layout\"]/div[1]/div[1]/div/div/div[2]/dl/dd[2]" ));
 		put(MediaField.LYRICS       , new SourceConversion(MediaField.LYRICS       , "//*[@id=\"Lyrics\"]/div[3]" ) {{ parseType = 0; }} );
 	} };
 
@@ -91,7 +91,7 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 				return null;
 			button.get(0).click();
 
-			List<HtmlAnchor> anchor = page.getByXPath("//*[@id=\"___gcse_0\"]/div/div/div/div[5]/div[2]/div/div/div[1]/div[1]/div[1]/div[1]/div/a");
+			List<HtmlAnchor> anchor = page.getByXPath("//*/a[@class=\"gs-title\"]"); //"//*[@id=\"___gcse_0\"]/div/div/div/div[5]/div[2]/div/div/div[2]/div[1]/div[1]/div[1]/div/a");
 			if (anchor == null || anchor.isEmpty())
 				return null;
 			String url = anchor.get(0).getHrefAttribute();

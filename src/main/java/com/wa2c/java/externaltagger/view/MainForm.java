@@ -293,7 +293,9 @@ public class MainForm extends JFrame {
         externalSource.add(source);
         source = new SourceJLyrics();
         externalSource.add(source);
-        source = new SourceKashiTime();
+//        source = new SourceKashiTime();
+//        externalSource.add(source);
+        source = new SourcePetitLyrics();
         externalSource.add(source);
         source = new SourceJoySound();
         externalSource.add(source);
@@ -301,6 +303,7 @@ public class MainForm extends JFrame {
         externalSource.add(source);
         source = new SourceLyricalNonsense();
         externalSource.add(source);
+
 
         for (AbstractExternalSource s : externalSource) {
             Boolean val;
@@ -380,7 +383,6 @@ public class MainForm extends JFrame {
         sourceTable.setModel(sourceTableModel);
         updateSourceParameter();
     }
-
 
     private void updateSourceParameter() {
         sourceParamPanel.removeAll();
@@ -471,68 +473,16 @@ public class MainForm extends JFrame {
     // Button Action
 
     private void getIndividualInfo() {
-        HashMap<MediaField, SearchFieldUsing> fieldUsing = new HashMap<>();
-        String title = searchFieldTitleTextField.getText();
-        String artist = searchFieldArtistTextField.getText();
-        String album = searchFieldAlbumTextField.getText();
-
         int row = mediaTable.getSelectedRow();
-        for (AbstractExternalSource source : externalSource) {
-            if (!source.getEnabled())
-                continue;
 
-            FieldDataMap inputMap = mediaList.get(row);
-            FieldDataMap m = new FieldDataMap(inputMap);
-            m.putFirstData(MediaField.TITLE, title);
-            m.putFirstData(MediaField.ARTIST, artist);
-            m.putFirstData(MediaField.ALBUM, album);
+        FieldDataMap currentMap = mediaList.get(row);
+        FieldDataMap conditionMap = new FieldDataMap(currentMap);
+        conditionMap.putFirstData(MediaField.TITLE, searchFieldTitleTextField.getText());
+        conditionMap.putFirstData(MediaField.ARTIST, searchFieldArtistTextField.getText());
+        conditionMap.putFirstData(MediaField.ALBUM, searchFieldAlbumTextField.getText());
 
-            FieldDataMap outputMap = source.getFieldDataMap(m, fieldUsing);
-            if (outputMap == null)
-                continue;
-
-            if (searchCompareTitleCheckBox.isSelected() && inputMap.containsKey(MediaField.TITLE) && outputMap.containsKey(MediaField.TITLE)) {
-                // タイトルが不一致の場合は取得しない
-                SearchFieldUsing u = fieldUsing.get(MediaField.TITLE);
-                if (u != null) {
-                    String inputTitle = AppUtils.removeWhitespace(u.format(inputMap.getFirstData(MediaField.TITLE)), false);
-                    String outputTitle = AppUtils.removeWhitespace(u.format(outputMap.getFirstData(MediaField.TITLE)), false);
-                    if (!(inputTitle).equals(outputTitle)) {
-                        continue;
-                    }
-                }
-            }
-
-            MediaField[] fields = MediaField.values();
-            for (int i = 0; i < fields.length; i++) {
-                MediaField field = fields[i];
-                if (!outputMap.containsKey(field))
-                    continue;
-
-                List<String> values = outputMap.get(field);
-
-                if (field == MediaField.TITLE) {
-                    // タイトルは取得しない
-                    continue;
-                } else if (field == MediaField.GENRE) {
-                    // ジャンルは一般化する
-                    if (CollectionUtils.isEmpty(values)) {
-                        inputMap.putNewData(field, "JPop");
-                    } else {
-                        inputMap.putNewData(field, values.stream().map(c -> AppUtils.generalizeGenre(c)).collect(Collectors.toList()));
-                    }
-                    continue;
-                }
-                if (values == null)
-                    continue;
-
-                // 不足分のみ取得
-                //if (CollectionUtils.isEmpty(inputMap.get(field))) {
-                inputMap.put(field, outputMap.get(field));
-                //}
-
-            }
-        }
+        FieldDataMap resultMap = getResult(conditionMap, new HashMap<>());
+        updateMediaInfo(currentMap, resultMap);
 
         updateMediaTable();
     }
@@ -547,61 +497,64 @@ public class MainForm extends JFrame {
         fieldUsing.put(MediaField.ALBUM, (SearchFieldUsing)searchFieldAlbumComboBox.getSelectedItem());
 
         for (int row : mediaTable.getSelectedRows()) {
-            // データ取得
-            for (AbstractExternalSource source : externalSource) {
-                if (!source.getEnabled())
-                    continue;
-
-                FieldDataMap inputMap = mediaList.get(row);
-                FieldDataMap outputMap =  source.getFieldDataMap(mediaList.get(row), fieldUsing);
-
-                if (outputMap == null)
-                    continue;
-
-                if (searchCompareTitleCheckBox.isSelected() && inputMap.containsKey(MediaField.TITLE) && outputMap.containsKey(MediaField.TITLE)) {
-                    // タイトルが不一致の場合は取得しない
-                    SearchFieldUsing u = fieldUsing.get(MediaField.TITLE);
-                    String inputTitle = AppUtils.removeWhitespace(u.format(inputMap.getFirstData(MediaField.TITLE)), false);
-                    String outputTitle = AppUtils.removeWhitespace(u.format(outputMap.getFirstData(MediaField.TITLE)), false);
-                    if ( !( inputTitle ).equals( outputTitle ) ) {
-                        continue;
-                    }
-               }
-
-                MediaField[] fields = MediaField.values();
-                for (int i = 0; i < fields.length; i++) {
-                    MediaField field = fields[i];
-                    if (!outputMap.containsKey(field))
-                        continue;
-
-                    List<String> values = outputMap.get(field);
-
-                    if (field == MediaField.TITLE) {
-                        // タイトルは取得しない
-                        continue;
-                    } else if (field == MediaField.GENRE) {
-                        // ジャンルは一般化する
-                        if (CollectionUtils.isEmpty(values)) {
-                            inputMap.putNewData(field, "JPop");
-                        } else {
-                            inputMap.putNewData(field, values.stream().map(c -> AppUtils.generalizeGenre(c)).collect(Collectors.toList()));
-                        }
-                        continue;
-                    }
-                    if (values == null)
-                        continue;
-
-                    // 不足分のみ取得
-                    //if (CollectionUtils.isEmpty(inputMap.get(field))) {
-                    inputMap.put(field, outputMap.get(field));
-                    //}
-
-                }
-            }
+            FieldDataMap currentMap = mediaList.get(row);
+            FieldDataMap resultMap = getResult(currentMap, fieldUsing);
+            updateMediaInfo(currentMap, resultMap);
         }
 
         updateMediaTable();
     }
+
+    /**
+     * Get field data map by condition
+     * @param conditionMap Search condition.
+     * @param fieldUsing Condition using.
+     * @return Result map.
+     */
+    private FieldDataMap getResult(FieldDataMap conditionMap, HashMap<MediaField, SearchFieldUsing> fieldUsing) {
+        for (AbstractExternalSource source : externalSource) {
+            if (!source.getEnabled())
+                continue;
+
+            FieldDataMap resultMap = source.getFieldDataMap(conditionMap, fieldUsing);
+            if (resultMap != null) return resultMap;
+        }
+        return null;
+    }
+
+    /**
+     * Update current filed data map.
+     * @param currentMap Current map.
+     * @param resultMap Result map.
+     */
+    private void updateMediaInfo(FieldDataMap currentMap, FieldDataMap resultMap) {
+        MediaField[] fields = MediaField.values();
+        for (MediaField field : fields) {
+            if (!resultMap.containsKey(field))
+                continue;
+
+            List<String> values = resultMap.get(field);
+
+            if (field == MediaField.TITLE) {
+                // タイトルは取得しない
+                continue;
+            } else if (field == MediaField.GENRE) {
+                // ジャンルは一般化する
+                if (CollectionUtils.isEmpty(values)) {
+                    currentMap.putNewData(field, "JPop");
+                } else {
+                    currentMap.putNewData(field, values.stream().map(c -> AppUtils.generalizeGenre(c)).collect(Collectors.toList()));
+                }
+                continue;
+            }
+            if (values == null)
+                continue;
+
+            currentMap.put(field, resultMap.get(field));
+        }
+    }
+
+
 
     private void writeSelectedMediaInfo() {
         for (int row : mediaTable.getSelectedRows()) {
@@ -754,7 +707,7 @@ public class MainForm extends JFrame {
 
             try {
                 String mbid = map.getFirstData(MediaField.MUSICBRAINZ_RELEASEID);
-                URL url = new URL("https://musicbrainz.org/ws/2/release/" + mbid);
+                URL url = new URL("https://musicbrainz.org/ws/2/release/" + mbid + "?fmt=xml");
                 Logger.d(url.toString());
 
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();

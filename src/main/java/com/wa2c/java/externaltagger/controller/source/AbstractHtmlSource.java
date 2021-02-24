@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -19,28 +20,32 @@ public abstract class AbstractHtmlSource extends AbstractExternalSource {
 	protected abstract String getSearchAnchorXPath();
 
 	protected static WebClient getWebClient() {
-		    WebClient _webClient = new WebClient(BrowserVersion.FIREFOX_60);
-			_webClient.getOptions().setJavaScriptEnabled(true);
-			_webClient.getOptions().setDownloadImages(false);
-			_webClient.getOptions().setRedirectEnabled(true);
-			_webClient.setAjaxController(new NicelyResynchronizingAjaxController());
-			_webClient.waitForBackgroundJavaScript(5000);
-			_webClient.getOptions().setRedirectEnabled(true);
-			_webClient.getOptions().setThrowExceptionOnScriptError(false);
-			_webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
-			_webClient.getOptions().setCssEnabled(false);
-			_webClient.getOptions().setUseInsecureSSL(true);
-			_webClient.getCookieManager().setCookiesEnabled(true);
+		WebClient _webClient = new WebClient(BrowserVersion.FIREFOX_60);
+		_webClient.getOptions().setJavaScriptEnabled(true);
+		_webClient.getOptions().setDownloadImages(false);
+		_webClient.getOptions().setRedirectEnabled(true);
+		_webClient.setAjaxController(new NicelyResynchronizingAjaxController());
+		_webClient.waitForBackgroundJavaScript(5000);
+		_webClient.getOptions().setRedirectEnabled(true);
+		_webClient.getOptions().setThrowExceptionOnScriptError(false);
+		_webClient.getOptions().setThrowExceptionOnFailingStatusCode(false);
+		_webClient.getOptions().setCssEnabled(false);
+		_webClient.getOptions().setUseInsecureSSL(true);
+		_webClient.getCookieManager().setCookiesEnabled(true);
 
-			_webClient.setAjaxController(new AjaxController(){
-				@Override
-				public boolean processSynchron(HtmlPage page, WebRequest request, boolean async)
-				{
-					return true;
-				}
-			});
+		_webClient.setAjaxController(new AjaxController(){
+			@Override
+			public boolean processSynchron(HtmlPage page, WebRequest request, boolean async)
+			{
+				return true;
+			}
+		});
 
-			return _webClient;
+//		// Disable log
+//		java.util.logging.Logger.getLogger("com.gargoylesoftware").setLevel(Level.OFF);
+//		System.setProperty("org.Apache.commons.logging.Log", "org.Apache.commons.logging.impl.NoOpLog");
+
+		return _webClient;
 	}
 
 
@@ -66,17 +71,25 @@ public abstract class AbstractHtmlSource extends AbstractExternalSource {
 		// テキスト取得
 		String text;
 		try {
-			HtmlElement data = (HtmlElement)elements.get(0);
+			Object element = elements.get(0);
+			if (element instanceof HtmlElement) {
+				HtmlElement data = (HtmlElement) element;
 
-			if (sourceConversion.parseType == 1) {
-				StringBuilder builder = new StringBuilder();
-				parseLyrics(builder, data);
-				text = builder.toString().trim();
+				if (sourceConversion.parseType == 1) {
+					StringBuilder builder = new StringBuilder();
+					parseLyrics(builder, data);
+					text = builder.toString().trim();
+				} else {
+					text = data.asText();
+				}
+			} else if (element instanceof DomText) {
+				DomText domText = (DomText) element;
+				text = domText.getWholeText();
 			} else {
-				text = data.asText();
+				text = element.toString();
 			}
 		} catch (ClassCastException e) {
-			text = elements.get(0).toString();
+			text = elements.get(0) .toString();
 		}
 		if (StringUtils.isEmpty(text))
 			return null;

@@ -18,7 +18,7 @@ public class SourceJLyrics extends AbstractHtmlSource {
 
 	private static final String SITE_NAME = "J-Lyrics";
 	/** 検索URI。 */
-	private static final String SEARCH_URL = "http://search.j-lyric.net/index.php?kt=%s&ct=2&ka=%s&ca=2";
+	private static final String SEARCH_URL = "https://search2.j-lyric.net/index.php?kt=%s&ct=2&ka=%s&ca=2";
 	/** 検索結果アンカー。 */
 	//private static final String SEARCH_ANCHOR_XPATH = "//*[@id=\"lyricList\"]/div[2]/div[2]/a";
     private static final String SEARCH_ANCHOR_XPATH = "//*[@id=\"mnb\"]/div[2]/p[1]/a";
@@ -102,7 +102,7 @@ public class SourceJLyrics extends AbstractHtmlSource {
 			// 特殊置換え
 			String outputTitle = outputMap.getFirstData(MediaField.TITLE);
 			if (StringUtils.isNotEmpty(outputTitle)) {
-				outputMap.putNewData(MediaField.TITLE, outputTitle.replaceFirst(" 歌詞$", ""));
+				outputMap.putNewData(MediaField.TITLE, outputTitle.replaceFirst("「(.*)」歌詞$", "$1"));
 			}
 		}
 		return outputMap;
