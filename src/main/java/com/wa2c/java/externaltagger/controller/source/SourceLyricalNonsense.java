@@ -2,7 +2,6 @@ package com.wa2c.java.externaltagger.controller.source;
 
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.*;
-import com.wa2c.java.externaltagger.common.AppUtils;
 import com.wa2c.java.externaltagger.common.Logger;
 import com.wa2c.java.externaltagger.model.FieldDataMap;
 import com.wa2c.java.externaltagger.value.MediaField;
@@ -27,12 +26,12 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 	} };
 
 	protected final static HashMap<MediaField, SourceConversion> sourceConversionMap = new HashMap<MediaField, SourceConversion>() { {
-		put(MediaField.TITLE        , new SourceConversion(MediaField.TITLE        , "substring-before(//*[@id=\"layout\"]/div[1]/div[1]/div/div/div[2]/h1, '歌詞')" ));
-		put(MediaField.ARTIST       , new SourceConversion(MediaField.ARTIST       , "//*[@id=\"layout\"]/div[1]/div[1]/div/div/div[2]/dl/dd[1]/a" ));
+		put(MediaField.TITLE        , new SourceConversion(MediaField.TITLE        , "substring-before(//*[@id=\"lpleftblock\"]/div[1]/div[3]/div/div/h1/span[1], 'の歌詞')" ));
+		put(MediaField.ARTIST       , new SourceConversion(MediaField.ARTIST       , "//*[@id=\"lpleftblock\"]/div[1]/div[3]/div/div/h1/span[2]/a" ));
 //		put(MediaField.COMPOSER       , new SourceConversion(MediaField.COMPOSER       , "//*[@id=\"Lyrics\"]/div[5]/table/thead/tr[4]/td" ));
 //		put(MediaField.LYRICIST       , new SourceConversion(MediaField.LYRICIST       , "//*[@id=\"Lyrics\"]/div[5]/table/thead/tr[3]/td" ));
-		put(MediaField.COMMENT      , new SourceConversion(MediaField.COMMENT      , "//*[@id=\"layout\"]/div[1]/div[1]/div/div/div[2]/dl/dd[2]" ));
-		put(MediaField.LYRICS       , new SourceConversion(MediaField.LYRICS       , "//*[@id=\"Lyrics\"]/div[3]" ) {{ parseType = 0; }} );
+		put(MediaField.COMMENT      , new SourceConversion(MediaField.COMMENT      , "string(//*[@id=\"lpleftblock\"]/div[1]/div[3]/div/div/h1/span[3])" ));
+		put(MediaField.LYRICS       , new SourceConversion(MediaField.LYRICS       , "//*[@id=\"Original\"]/div[3]" ) {{ parseType = 0; }} );
 	} };
 
 	public SourceLyricalNonsense() {
@@ -91,7 +90,7 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 				return null;
 			button.get(0).click();
 
-			List<HtmlAnchor> anchor = page.getByXPath("//*/a[@class=\"gs-title\"]"); //"//*[@id=\"___gcse_0\"]/div/div/div/div[5]/div[2]/div/div/div[2]/div[1]/div[1]/div[1]/div/a");
+			List<HtmlAnchor> anchor = page.getByXPath("//*/a[@class=\"gs-title\"]");
 			if (anchor == null || anchor.isEmpty())
 				return null;
 			String url = anchor.get(0).getHrefAttribute();
@@ -100,19 +99,29 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 			final FieldDataMap outputData = getLyricsPageData(lyricsPage);
 
 			//List<HtmlTable> infoTables = lyricsPage.getByXPath("//*[@id=\"Lyrics\"]/div[6]/table");
-			List<HtmlTable> infoTables = lyricsPage.getByXPath("//*[@id=\"Lyrics\"]/*/table[@class=\"lyricdetails\"]");
+			List<HtmlUnorderedList> infoTables = lyricsPage.getByXPath("//*[@id=\"Original\"]/div[8]/div/ul");
 			if (!infoTables.isEmpty()) {
-				HtmlTable table = infoTables.get(0);
+				HtmlUnorderedList list = infoTables.get(0);
 
 				// 作曲者・作詞者
-				table.getRows().forEach(row -> {
-					if (row.getCell(0).getVisibleText().contains("作曲")) {
-						outputData.putNewData(MediaField.COMPOSER, row.getCell(1).getVisibleText().trim());
-					}
-					if (row.getCell(0).getVisibleText().contains("作詞")) {
-						outputData.putNewData(MediaField.LYRICIST, row.getCell(1).getVisibleText().trim());
+				list.getChildren().forEach(row -> {
+					Iterator<DomNode> iterator = row.getChildren().iterator();
+					String key = iterator.next().getVisibleText();
+					String value = iterator.next().getVisibleText().trim();
+					if (key.contains("作曲")) {
+						outputData.putNewData(MediaField.COMPOSER, value);
+					} else if (key.contains("作詞")) {
+						outputData.putNewData(MediaField.LYRICIST, value);
 					}
 				});
+//						.getRows().forEach(row -> {
+//					if (row.getCell(0).getVisibleText().contains("作曲")) {
+//						outputData.putNewData(MediaField.COMPOSER, row.getCell(1).getVisibleText().trim());
+//					}
+//					if (row.getCell(0).getVisibleText().contains("作詞")) {
+//						outputData.putNewData(MediaField.LYRICIST, row.getCell(1).getVisibleText().trim());
+//					}
+//				});
 			}
 
 

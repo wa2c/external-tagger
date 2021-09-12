@@ -20,7 +20,7 @@ public abstract class AbstractHtmlSource extends AbstractExternalSource {
 	protected abstract String getSearchAnchorXPath();
 
 	protected static WebClient getWebClient() {
-		WebClient _webClient = new WebClient(BrowserVersion.FIREFOX_60);
+		WebClient _webClient = new WebClient(BrowserVersion.FIREFOX_78);
 		_webClient.getOptions().setJavaScriptEnabled(true);
 		_webClient.getOptions().setDownloadImages(false);
 		_webClient.getOptions().setRedirectEnabled(true);

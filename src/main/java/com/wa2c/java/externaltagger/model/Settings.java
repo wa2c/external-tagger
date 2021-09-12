@@ -2,9 +2,13 @@ package com.wa2c.java.externaltagger.model;
 
 import com.google.gson.Gson;
 import com.wa2c.java.externaltagger.common.Logger;
+import com.wa2c.java.externaltagger.value.MediaField;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.stream.Collectors;
 
 public class Settings {
 
@@ -19,8 +23,7 @@ public class Settings {
 
     public HashMap<String, HashMap<FieldDataMap, Boolean>> sourceFieldEnabledMap = new HashMap<>();
 
-
-
+    public ArrayList<MediaField> visibleColumnList = new ArrayList(Arrays.asList(MediaField.values()));
 
     private static File SETTINGS_FILE = new File(System.getProperty("user.home"), "ExternalTagger.pref");
 

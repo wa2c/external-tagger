@@ -1,6 +1,5 @@
 package com.wa2c.java.externaltagger.view;
 
-import com.pedrohlc.viewlyricsppensearcher.LyricInfo;
 import com.wa2c.java.externaltagger.Program;
 import com.wa2c.java.externaltagger.common.AppUtils;
 import com.wa2c.java.externaltagger.common.Logger;
@@ -24,7 +23,6 @@ import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
 import org.jaudiotagger.tag.id3.AbstractID3Tag;
 import org.jaudiotagger.tag.id3.ID3v24Tag;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -36,7 +34,6 @@ import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
@@ -45,12 +42,10 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
-import java.util.Timer;
 import java.util.stream.Collectors;
 
 /**
@@ -108,44 +103,104 @@ public class MainForm extends JFrame {
         });
         Program.Pref = Settings.readSettings();
 
-        initializeData();
-
-
+        // initialize
+        initializeTablePane();
+        initializeSourcePane();
+        initializeHeaderPane();
+        initializeBottomPane();
 
         // popup
+        initializeItemPopupMenu();
+        initializeHeaderPopupMenu();
 
-        JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem menuItem = new JMenuItem("Open Folder");
-        menuItem.addActionListener(e -> {
-            if (mediaTable.getSelectedRow() < 0)
-                return;
+//        updateSourceList();
+        updateSourceTable();
+        sourceTable.getColumnModel().getColumn(0).setMaxWidth(sourceTable.getFont().getSize() + 8);
+        sourceTable.setRowHeight(sourceTable.getFont().getSize() + 8);
 
-            int row = mediaTable.getSelectedRow();
-            String filePath = mediaList.get(row).getFirstData(MediaField.FILE_PATH);
-            File f = new File(filePath);
-            if (!f.exists() || !f.isFile()) {
-                return;
+    }
+
+    private void initializeTablePane() {
+        // Media Table
+        Object[] header = Arrays.stream(MediaField.values()).map(x -> x != null ? x.getLabel() : null).toArray();
+        //Object[] header = Program.Pref.visibleColumnList.stream().map(x -> x != null ? x.getLabel() : null).toArray();
+        DefaultTableModel tableModel = new DefaultTableModel(header, 0);
+        mediaTable.setModel(tableModel);
+
+        mediaTable.setTransferHandler(new DropFileHandler());
+        mediaScrollPane.setTransferHandler(new DropFileHandler());
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            adjustColumnSizes(mediaTable, i, 4);
+        }
+        mediaTable.clearSelection();
+
+        mediaTable.getSelectionModel().addListSelectionListener(e -> updateSearchField());
+        mediaTable.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                super.keyTyped(e);
             }
+            @Override
+            public void keyReleased(KeyEvent e) {
 
-            AppUtils.openFolder(f);
+            }
+            @Override
+            public void keyPressed(KeyEvent e) {
+                switch (e.getKeyCode()) {
+                    case KeyEvent.VK_DELETE:
+                        removeSelectedMedia();
+                        break;
+                    case KeyEvent.VK_L:
+                        downloadLrc();
+                        break;
+                }
+            }
         });
-        popupMenu.add(menuItem);
-        JMenuItem resetMenuItem = new JMenuItem("Reset");
-        resetMenuItem.addActionListener(e -> removeSelectedMedia());
-        popupMenu.add(resetMenuItem);
-        JMenuItem deleteMenuItem = new JMenuItem("Delete");
-        deleteMenuItem.addActionListener(e -> removeSelectedMedia());
-        popupMenu.add(deleteMenuItem);
 
-        // TODO test
-        JMenuItem testMenuItem = new JMenuItem("test");
-        testMenuItem.addActionListener(e -> {
-
+        mediaScrollPane.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                mediaTable.clearSelection();
+            }
         });
-        popupMenu.add(testMenuItem);
+    }
 
-        // button
 
+    /**
+     * Initialize source pane.
+     */
+    private void initializeSourcePane() {
+        AbstractExternalSource source;
+        source = new SourceAmazonJp();
+        externalSource.add(source);
+        source = new SourceJLyrics();
+        externalSource.add(source);
+//        source = new SourceKashiTime();
+//        externalSource.add(source);
+        source = new SourcePetitLyrics();
+        externalSource.add(source);
+        source = new SourceJoySound();
+        externalSource.add(source);
+        source = new SourceKashiGet();
+        externalSource.add(source);
+        source = new SourceLyricalNonsense();
+        externalSource.add(source);
+
+        for (AbstractExternalSource s : externalSource) {
+            Boolean val;
+            if ((val = Program.Pref.sourceEnabledMap.get(s.getClass().getName())) != null) {
+                s.setEnabled(val);
+            } else {
+                s.setEnabled(false);
+            }
+        }
+    }
+
+
+    /**
+     * Initialize bottom pane.
+     */
+    private void initializeBottomPane() {
         searchIndividualButton.addActionListener(e -> getIndividualInfo());
 
         mediaAddButton.addActionListener(e -> {
@@ -181,60 +236,21 @@ public class MainForm extends JFrame {
             dialog.pack();
             dialog.setVisible(true);
         });
+    }
 
-        // listener
-
-        mediaTable.getSelectionModel().addListSelectionListener(e -> updateSearchField());
-        sourceTable.getColumnModel().getColumn(0).setMaxWidth(sourceTable.getFont().getSize() + 8);
-        sourceTable.setRowHeight(sourceTable.getFont().getSize() + 8);
-
-        mediaTable.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                super.keyTyped(e);
-            }
-            @Override
-            public void keyReleased(KeyEvent e) {
-
-            }
-            @Override
-            public void keyPressed(KeyEvent e) {
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_DELETE:
-                        removeSelectedMedia();
-                        break;
-                    case KeyEvent.VK_L:
-                        downloadLrc();
-                        break;
-                }
-            }
-        });
-        mediaTable.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                showPopup(e);
-            }
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                showPopup(e);
-            }
-            private void showPopup(MouseEvent e) {
-                if (e.isPopupTrigger()) {
-                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
-                }
-            }
-        });
-        mediaScrollPane.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                mediaTable.clearSelection();
-            }
-        });
-
-
-//        // Source Field
-//        sourceList.addListSelectionListener(e -> updateSourcePaneTable());
-
+    /**
+     * Initialize header pane.
+     */
+    private void initializeHeaderPane() {
+        // Search Condition Field
+        for (SearchFieldUsing u : SearchFieldUsing.values()) {
+            searchFieldTitleComboBox.addItem(u);
+            searchFieldArtistComboBox.addItem(u);
+            searchFieldAlbumComboBox.addItem(u);
+        }
+        searchFieldTitleComboBox.setSelectedIndex(0);
+        searchFieldArtistComboBox.setSelectedIndex(0);
+        searchFieldAlbumComboBox.setSelectedIndex(0);
 
         // 検索フィールド
         searchFieldTitleComboBox.addItemListener(e -> {
@@ -255,67 +271,88 @@ public class MainForm extends JFrame {
     }
 
 
+    /**
+     * Create item popup menu.
+     */
+    private void initializeItemPopupMenu() {
+        JPopupMenu popupMenu = new JPopupMenu();
+        JMenuItem menuItem = new JMenuItem("Open Folder");
+        menuItem.addActionListener(e -> {
+            if (mediaTable.getSelectedRow() < 0)
+                return;
+
+            int row = mediaTable.getSelectedRow();
+            String filePath = mediaList.get(row).getFirstData(MediaField.FILE_PATH);
+            File f = new File(filePath);
+            if (!f.exists() || !f.isFile()) {
+                return;
+            }
+
+            AppUtils.openFolder(f);
+        });
+        popupMenu.add(menuItem);
+        JMenuItem resetMenuItem = new JMenuItem("Reset");
+        resetMenuItem.addActionListener(e -> removeSelectedMedia());
+        popupMenu.add(resetMenuItem);
+        JMenuItem deleteMenuItem = new JMenuItem("Delete");
+        deleteMenuItem.addActionListener(e -> removeSelectedMedia());
+        popupMenu.add(deleteMenuItem);
+
+        // Set show event
+        mediaTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                showPopup(e);
+            }
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                showPopup(e);
+            }
+            private void showPopup(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                }
+            }
+        });
+    }
 
     /**
-     * Initialize data.
+     * Create header popup menu.
      */
-    private void initializeData() {
-        // Media Table
-        Object[] header = Arrays.stream(MediaField.values()).map(x -> x != null ? x.getLabel() : null).toArray();
-        DefaultTableModel tableModel = new DefaultTableModel(header, 0);
-        mediaTable.setModel(tableModel);
+    private void initializeHeaderPopupMenu() {
+        JPopupMenu headerPopupMenu = new JPopupMenu();
+        JMenuItem headerResetItem = new JMenuItem("Reset");
+        headerResetItem.addActionListener(e -> {
+            Program.Pref.visibleColumnList.clear();
+            Program.Pref.visibleColumnList.addAll(Arrays.asList(MediaField.values()));
+        });
+        headerPopupMenu.add(headerResetItem);
 
-        mediaTable.setTransferHandler(new DropFileHandler());
-        mediaScrollPane.setTransferHandler(new DropFileHandler());
-        for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            adjustColumnSizes(mediaTable, i, 4);
+        for (MediaField f : MediaField.values()) {
+            JCheckBoxMenuItem item = new JCheckBoxMenuItem(f.getLabel());
+            item.setSelected(Program.Pref.visibleColumnList.contains(f));
+            item.addActionListener(e -> {
+                boolean isChecked = !item.isSelected();
+                item.setSelected(isChecked);
+                if (isChecked) Program.Pref.visibleColumnList.add(f);
+                else Program.Pref.visibleColumnList.remove(f);
+            });
+            headerPopupMenu.add(item);
         }
-        mediaTable.clearSelection();
+
+        // Set show event
+        mediaTable.getTableHeader().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() ==  MouseEvent.BUTTON3) {
 
 
 
 
-        // Search Condition Field
-        for (SearchFieldUsing u : SearchFieldUsing.values()) {
-            searchFieldTitleComboBox.addItem(u);
-            searchFieldArtistComboBox.addItem(u);
-            searchFieldAlbumComboBox.addItem(u);
-        }
-        searchFieldTitleComboBox.setSelectedIndex(0);
-        searchFieldArtistComboBox.setSelectedIndex(0);
-        searchFieldAlbumComboBox.setSelectedIndex(0);
-
-        // Source
-
-
-        AbstractExternalSource source;
-        source = new SourceAmazonJp();
-        externalSource.add(source);
-        source = new SourceJLyrics();
-        externalSource.add(source);
-//        source = new SourceKashiTime();
-//        externalSource.add(source);
-        source = new SourcePetitLyrics();
-        externalSource.add(source);
-        source = new SourceJoySound();
-        externalSource.add(source);
-        source = new SourceKashiGet();
-        externalSource.add(source);
-        source = new SourceLyricalNonsense();
-        externalSource.add(source);
-
-
-        for (AbstractExternalSource s : externalSource) {
-            Boolean val;
-            if ((val = Program.Pref.sourceEnabledMap.get(s.getClass().getName())) != null) {
-                s.setEnabled(val);
-            } else {
-                s.setEnabled(false);
+                    headerPopupMenu.show(e.getComponent(), e.getX(), e.getY());
+                }
             }
-        }
-
-//        updateSourceList();
-        updateSourceTable();
+        });
     }
 
     /**
@@ -806,7 +843,6 @@ public class MainForm extends JFrame {
 
             return true;
         }
-
     }
 
 
