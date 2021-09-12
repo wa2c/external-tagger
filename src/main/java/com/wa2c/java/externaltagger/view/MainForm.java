@@ -122,8 +122,8 @@ public class MainForm extends JFrame {
 
     private void initializeTablePane() {
         // Media Table
-        Object[] header = Arrays.stream(MediaField.values()).map(x -> x != null ? x.getLabel() : null).toArray();
-        //Object[] header = Program.Pref.visibleColumnList.stream().map(x -> x != null ? x.getLabel() : null).toArray();
+        //Object[] header = Arrays.stream(MediaField.values()).map(x -> x != null ? x.getLabel() : null).toArray();
+        Object[] header = Program.Pref.visibleColumnList.stream().map(x -> x != null ? x.getLabel() : null).toArray();
         DefaultTableModel tableModel = new DefaultTableModel(header, 0);
         mediaTable.setModel(tableModel);
 
@@ -326,29 +326,27 @@ public class MainForm extends JFrame {
             Program.Pref.visibleColumnList.clear();
             Program.Pref.visibleColumnList.addAll(Arrays.asList(MediaField.values()));
         });
-        headerPopupMenu.add(headerResetItem);
-
-        for (MediaField f : MediaField.values()) {
-            JCheckBoxMenuItem item = new JCheckBoxMenuItem(f.getLabel());
-            item.setSelected(Program.Pref.visibleColumnList.contains(f));
-            item.addActionListener(e -> {
-                boolean isChecked = !item.isSelected();
-                item.setSelected(isChecked);
-                if (isChecked) Program.Pref.visibleColumnList.add(f);
-                else Program.Pref.visibleColumnList.remove(f);
-            });
-            headerPopupMenu.add(item);
-        }
 
         // Set show event
         mediaTable.getTableHeader().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getButton() ==  MouseEvent.BUTTON3) {
+                    headerPopupMenu.removeAll();
+                    headerPopupMenu.add(headerResetItem);
 
-
-
-
+                    List<MediaField> showItems = Program.Pref.visibleColumnList;
+                    for (MediaField f : MediaField.values()) {
+                        JCheckBoxMenuItem item = new JCheckBoxMenuItem(f.getLabel());
+                        item.setSelected(showItems.contains(f));
+                        item.addActionListener(event -> {
+                            boolean isChecked = item.isSelected();
+                            item.setSelected(isChecked);
+                            if (isChecked) Program.Pref.visibleColumnList.add(f);
+                            else Program.Pref.visibleColumnList.remove(f);
+                        });
+                        headerPopupMenu.add(item);
+                    }
                     headerPopupMenu.show(e.getComponent(), e.getX(), e.getY());
                 }
             }
