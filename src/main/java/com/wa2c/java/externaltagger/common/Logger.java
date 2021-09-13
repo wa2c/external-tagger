@@ -21,6 +21,10 @@ public class Logger {
 		logger.setLevel( Level.ALL );
 		logger.addHandler(ch);
 		//logger.setUseParentHandlers(false);
+
+		// HTMLUnit
+		java.util.logging.Logger.getLogger("com.gargoylesoftware").setLevel(Level.OFF);
+		System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
 	}
 
 	/**

@@ -47,7 +47,7 @@ public class MediaFileController {
                     list.add(map);
                 }
             } catch (Exception e) {
-                Logger.d(e);
+                Logger.d("Reading failed: " + f.getName());
             }
         }
         return list;

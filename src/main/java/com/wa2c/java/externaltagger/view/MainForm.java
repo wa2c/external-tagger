@@ -39,7 +39,8 @@ import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
-import java.io.*;
+import java.io.File;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.ParseException;
@@ -551,7 +552,7 @@ public class MainForm extends JFrame {
             if (!source.getEnabled())
                 continue;
 
-            FieldDataMap resultMap = source.getFieldDataMap(conditionMap, fieldUsing);
+             FieldDataMap resultMap = source.getFieldDataMap(conditionMap, fieldUsing);
             if (resultMap != null) return resultMap;
         }
         return new FieldDataMap();
@@ -637,32 +638,29 @@ public class MainForm extends JFrame {
                         tag.deleteField(key);
 
                         if (field == MediaField.YEAR) {
-                            try {
-                                if (!CollectionUtils.isEmpty(vals)) {
-                                    fileDate = DateUtils.parseDate(vals.get(0),
-                                            "yyyy-MM-dd",
-                                            "yyyy/MM/dd",
-                                            "yyyy.MM.dd",
-                                            "yyyy-MM-dd HH:mm:ss",
-                                            "yyyy-MM-dd HH:mm:ss",
-                                            "yyyy-MM-dd HH:mm:ss");
-                                }
-                            } catch (IllegalArgumentException | ParseException ex ) {
-                                Logger.e(ex);
-                            }
-
                             if (tag instanceof AbstractID3Tag && !(tag instanceof ID3v24Tag)) {
-                                // ID3 v2.4を除くID3タグは年のみ
-                                if (fileDate != null) {
-                                    Calendar cal = Calendar.getInstance();
-                                    cal.setTime(fileDate);
-                                    tag.addField(key, String.valueOf(cal.get(Calendar.YEAR)));
-                                    continue;
+                                try {
+                                    if (!CollectionUtils.isEmpty(vals)) {
+                                        fileDate = DateUtils.parseDate(vals.get(0),
+                                                "yyyy-MM-dd",
+                                                "yyyy/MM/dd",
+                                                "yyyy.MM.dd",
+                                                "yyyy-MM-dd HH:mm:ss",
+                                                "yyyy-MM-dd HH:mm:ss",
+                                                "yyyy-MM-dd HH:mm:ss");
+                                    }
+
+                                    // ID3 v2.4を除くID3タグは年のみ
+                                    if (fileDate != null) {
+                                        Calendar cal = Calendar.getInstance();
+                                        cal.setTime(fileDate);
+                                        tag.addField(key, String.valueOf(cal.get(Calendar.YEAR)));
+                                        continue;
+                                    }
+                                } catch (IllegalArgumentException | ParseException ignore ) {
                                 }
                             }
-
                         }
-
 
                         for (String val : vals) {
                             try {

@@ -9,8 +9,6 @@ import org.jaudiotagger.tag.reference.ID3V2Version;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Locale;
-import java.util.ResourceBundle;
 
 /**
  * Created by wa2c on 2016/02/24.

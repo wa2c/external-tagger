@@ -73,12 +73,14 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 		if (StringUtils.isEmpty(searchWord)) {
 			return null;
 		}
-
+		Logger.d("Search: title=\"" + title + "\", artist=\"" + artist + "\"");
 
 		try (WebClient webClient = getWebClient()) {
 			// 検索結果URL取得
+			Logger.d("Search Page Url=" + SEARCH_URL);
 			HtmlPage page = webClient.getPage(SEARCH_URL);
-			Logger.d(page.asXml());
+			Logger.d("Search Page done.");
+			//Logger.d(page.asXml());
 
 			List<HtmlTextInput> textInput = page.getByXPath("//*[@id=\"gsc-i-id1\"]");
 			if (textInput == null || textInput.isEmpty())
@@ -95,8 +97,11 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 				return null;
 			String url = anchor.get(0).getHrefAttribute();
 
+			Logger.d("Lyrics Page Url=" + url);
 			HtmlPage lyricsPage = webClient.getPage(url);
 			final FieldDataMap outputData = getLyricsPageData(lyricsPage);
+			Logger.d("Lyrics Page done.");
+			Logger.d("FieldDataMap=" + outputData.toString());
 
 			//List<HtmlTable> infoTables = lyricsPage.getByXPath("//*[@id=\"Lyrics\"]/div[6]/table");
 			List<HtmlUnorderedList> infoTables = lyricsPage.getByXPath("//*[@id=\"Original\"]/div[8]/div/ul");
