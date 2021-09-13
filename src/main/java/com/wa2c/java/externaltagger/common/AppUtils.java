@@ -224,11 +224,7 @@ public final class AppUtils {
 
 		String it = removeWhitespace(normalizeTitle(text1), false);
 		String ot = removeWhitespace(normalizeTitle(text2), false);
-		if (it.equals(ot)) {
-			return true;
-		} else {
-			return false;
-		}
+		return it.equals(ot);
 	}
 
 

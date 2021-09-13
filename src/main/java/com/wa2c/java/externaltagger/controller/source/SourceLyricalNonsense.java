@@ -26,7 +26,7 @@ public class SourceLyricalNonsense extends AbstractHtmlSource {
 	} };
 
 	protected final static HashMap<MediaField, SourceConversion> sourceConversionMap = new HashMap<MediaField, SourceConversion>() { {
-		put(MediaField.TITLE        , new SourceConversion(MediaField.TITLE        , "substring-before(//*[@id=\"lpleftblock\"]/div[1]/div[3]/div/div/h1/span[1], 'の歌詞')" ));
+		put(MediaField.TITLE        , new SourceConversion(MediaField.TITLE        , "substring-before(//*[@id=\"lpleftblock\"]/div[1]/div[3]/div/div/h1/span[1], '歌詞')" ));
 		put(MediaField.ARTIST       , new SourceConversion(MediaField.ARTIST       , "//*[@id=\"lpleftblock\"]/div[1]/div[3]/div/div/h1/span[2]/a" ));
 //		put(MediaField.COMPOSER       , new SourceConversion(MediaField.COMPOSER       , "//*[@id=\"Lyrics\"]/div[5]/table/thead/tr[4]/td" ));
 //		put(MediaField.LYRICIST       , new SourceConversion(MediaField.LYRICIST       , "//*[@id=\"Lyrics\"]/div[5]/table/thead/tr[3]/td" ));

@@ -563,6 +563,22 @@ public class MainForm extends JFrame {
      * @param resultMap Result map.
      */
     private void updateMediaInfo(FieldDataMap currentMap, FieldDataMap resultMap) {
+
+        if (searchCompareTitleCheckBox.isSelected()) {
+            String currentTitle = currentMap.getFirstData(MediaField.TITLE);
+            String resultTitle = resultMap.getFirstData(MediaField.TITLE);
+            if (StringUtils.isEmpty(currentTitle) || StringUtils.isEmpty(resultTitle)) {
+                JOptionPane.showMessageDialog(this, "タイトルの比較ができません\n\nLocal : " + currentTitle + "\nRemote:" + resultTitle);
+                return;
+            }
+
+            // タイトルが不一致の場合は取得しない
+            SearchFieldUsing u = (SearchFieldUsing) searchFieldTitleComboBox.getSelectedItem();
+            if (!AppUtils.sameText(u.format(currentTitle), u.format(resultTitle))) {
+                return;
+            }
+        }
+
         MediaField[] fields = MediaField.values();
         for (MediaField field : fields) {
             if (!resultMap.containsKey(field))
